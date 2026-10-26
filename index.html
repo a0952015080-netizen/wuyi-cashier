@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>WUYI 櫃檯快速結帳系統</title>
+<style>
+:root{
+  --p:#ff6b81;--pl:#fff0f3;--ac:#ff4757;--bg:#f4f5f8;
+  --t:#2f3542;--tm:#747d8c;--b:#dcdde1;--f:#574b90;
+  --success:#2ed573;--warn:#fcc419;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft JhengHei",Arial,sans-serif}
+body{background:var(--bg);color:var(--t);padding:8px}
+.container{max-width:1320px;margin:0 auto;width:100%}
+
+/* 頂部標題 */
+.header-bar{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:8px 14px;border-radius:9px;border:1.5px solid var(--b);margin-bottom:8px;box-shadow:0 2px 6px rgba(0,0,0,0.03)}
+.header-title-box h1{font-size:17px;font-weight:800;color:#2f3542;letter-spacing:0.5px}
+.top-tools{display:flex;align-items:center;gap:6px}
+.order-badge{background:#f1f5f9;color:#334155;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:800;border:1px solid #cbd5e1}
+
+/* 主版面 Grid 配置：桌面版高度完全拉齊一致，響應式自動適應手機 */
+.pos-grid{
+  display:grid;
+  grid-template-columns:minmax(0, 1.25fr) minmax(370px, 420px);
+  gap:12px;
+  align-items:stretch;
+}
+
+.order-form-column{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+/* 卡片與欄位 */
+.card{background:#fff;border-radius:9px;padding:8px 12px;border:1.5px solid var(--b);box-shadow:0 2px 6px rgba(0,0,0,0.03)}
+.card-header{font-size:12.5px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;color:#1e293b}
+.btn-group{display:flex;flex-wrap:wrap;gap:4px}
+.btn{flex:1;min-width:40px;padding:5px 4px;font-size:12px;border:1.5px solid var(--b);background:#fff;color:var(--t);border-radius:6px;cursor:pointer;text-align:center;font-weight:600;user-select:none;transition:all 0.15s ease}
+.btn:hover{border-color:var(--p);background:var(--pl)}
+.btn.active{background:var(--ac);color:#fff;border-color:var(--ac);font-weight:700;box-shadow:0 2px 5px rgba(255,71,87,0.25)}
+
+/* 鮮花專區卡片 */
+.flower-card{background:#faf9ff;border:1.5px solid #dcd6f7}
+.flower-row{margin-bottom:5px}
+.flower-title{font-size:11.5px;font-weight:700;color:var(--f);margin-bottom:3px;display:flex;align-items:center;justify-content:space-between}
+.tag-free{font-size:9.5px;background:#eccc68;color:#2f3542;padding:1px 5px;border-radius:4px;font-weight:700}
+.tag-fee{font-size:9.5px;background:#ff6b81;color:#fff;padding:1px 5px;border-radius:4px;font-weight:bold}
+.color-badge{font-size:10px;font-weight:700;margin-left:4px;color:#8854d0}
+
+/* 色系按鈕 */
+.color-btn::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;background:var(--cbg,#ccc);border:1px solid rgba(0,0,0,0.2)}
+.color-btn.active{background:var(--cbg)!important;color:var(--cc,#fff)!important;border-color:var(--cb,#222)!important}
+.c-none{--cbg:#747d8c;--cc:#fff;--cb:#57606f}
+.c-white{--cbg:#fff;--cc:#222;--cb:#222}
+.c-green{--cbg:#10ac84;--cc:#fff;--cb:#0b8263}
+.c-blue{--cbg:#2e86de;--cc:#fff;--cb:#1a5ca1}
+.c-pink{--cbg:#ff6b81;--cc:#fff;--cb:#d6304d}
+.c-yellow{--cbg:#fed330;--cc:#222;--cb:#d19f07}
+.c-purple{--cbg:#8854d0;--cc:#fff;--cb:#5c3599}
+.c-orange{--cbg:#ff9f43;--cc:#fff;--cb:#d3731a}
+.c-black{--cbg:#222f3e;--cc:#fff;--cb:#000}
+.c-rice{--cbg:#f5f0e6;--cc:#4a3f35;--cb:#d8cbba}
+.c-flower{--cbg:linear-gradient(135deg,#ffd1dc,#ffecd2);--cc:#d6304d;--cb:#ffb8b8}
+.c-grid{--cbg:repeating-linear-gradient(0deg,#f5f6fa,#f5f6fa 2px,#dcdde1 2px,#dcdde1 4px);--cc:#222;--cb:#57606f}
+.c-other{--cbg:linear-gradient(135deg,#a55eea,#45aaf2);--cc:#fff;--cb:#3867d6}
+.disabled-box{opacity:0.35;pointer-events:none}
+
+/* 輸入框 */
+.input{width:100%;height:32px;padding:4px 8px;font-size:12.5px;border:1.5px solid var(--b);background:#fff;border-radius:6px;outline:none;transition:border-color 0.15s,box-shadow 0.15s}
+.input:focus{border-color:var(--ac);box-shadow:0 0 0 2px rgba(255,71,87,0.12)}
+
+/* 自訂填寫小區塊 */
+.other-input-box{margin-top:4px;display:none;animation:fadeIn 0.15s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-2px)}to{opacity:1;transform:translateY(0)}}
+
+/* 右側收銀明細卡片：與左欄高度一致、明細格子加大 */
+.sidebar{
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  position:sticky;
+  top:8px;
+}
+.receipt-card{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+  background:#fff;
+  border-radius:10px;
+  border:1.5px solid #cbd5e1;
+  padding:12px 14px;
+  box-shadow:0 4px 14px rgba(0,0,0,0.04);
+  box-sizing:border-box;
+}
+.receipt-title{
+  font-size:14px;
+  font-weight:800;
+  border-bottom:2px solid #f1f5f9;
+  padding-bottom:7px;
+  margin-bottom:8px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:4px;
+}
+.btn-undo-item{
+  padding:3.5px 8px;
+  font-size:11px;
+  font-weight:700;
+  background:#fff0f3;
+  color:#d6304d;
+  border:1.5px solid #ff6b81;
+  border-radius:5px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  transition:all 0.15s;
+}
+.btn-undo-item:hover{background:#ff6b81;color:#fff}
+
+/* 明細格子放大並自動伸展 (Flex 1) */
+.receipt-items{
+  flex:1;
+  min-height:260px;
+  max-height:none;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  background:#f8fafc;
+  padding:10px 12px;
+  border-radius:8px;
+  border:1.5px dashed #cbd5e1;
+  margin-bottom:8px;
+}
+.receipt-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:6px 8px;
+  background:#fff;
+  border-radius:6px;
+  border:1px solid #e2e8f0;
+  box-shadow:0 1px 2px rgba(0,0,0,0.02);
+}
+.receipt-item-name{font-weight:700;color:#1e293b;font-size:13px}
+.receipt-item-desc{font-size:11px;color:#64748b;margin-top:1px}
+.receipt-item-val{font-weight:800;font-size:13.5px;white-space:nowrap;display:flex;align-items:center}
+.item-del-btn{
+  border:none;
+  background:#fee2e2;
+  color:#dc2626;
+  font-size:10.5px;
+  font-weight:800;
+  width:20px;
+  height:20px;
+  border-radius:4px;
+  cursor:pointer;
+  margin-left:7px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+  transition:all 0.12s;
+}
+.item-del-btn:hover{background:#dc2626;color:#fff}
+
+/* 金額計算區 */
+.calc-box{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  background:#f1f5f9;
+  padding:10px;
+  border-radius:8px;
+  margin-bottom:8px;
+  border:1px solid #e2e8f0;
+}
+.calc-stat{display:flex;flex-direction:column;gap:2px}
+.calc-lbl{font-size:11px;font-weight:700;color:#64748b}
+.calc-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}
+.calc-val.total{color:#0f172a}
+.calc-val.change{color:#059669}
+.calc-val.shortage{color:#e11d48}
+
+/* 現金快選按鈕 */
+.quick-cash{display:flex;gap:4px;margin-top:4px}
+.quick-btn{flex:1;padding:4px 2px;font-size:11px;font-weight:700;background:#f8fafc;border:1px solid #cbd5e1;border-radius:5px;cursor:pointer;color:#475569}
+.quick-btn:hover{background:#e2e8f0}
+
+/* 送出大按鈕 */
+.btn-submit-main{
+  width:100%;
+  padding:11px;
+  font-size:15px;
+  font-weight:800;
+  background:linear-gradient(135deg,#ff4757,#ff6b81);
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  box-shadow:0 3px 8px rgba(255,71,87,0.3);
+  letter-spacing:0.5px;
+  transition:transform 0.1s;
+}
+.btn-submit-main:active{transform:scale(0.99)}
+
+/* 補印與輔助動作 */
+.sec-actions{display:flex;gap:4px;margin-top:5px}
+.btn-sec{flex:1;padding:6px 4px;font-size:11.5px;font-weight:700;background:#fff;border:1.5px solid #cbd5e1;border-radius:6px;cursor:pointer;color:#475569;transition:all 0.15s}
+.btn-sec:hover{border-color:#94a3b8;background:#f8fafc}
+
+/* 狀態提示 */
+.status-bar{font-size:11.5px;font-weight:700;text-align:center;min-height:16px;margin-top:4px}
+
+/* 列印專用紙條隱藏 */
+#print-slip{display:none}
+
+@media print{
+  body *{visibility:hidden}
+  #print-slip,#print-slip *{visibility:visible}
+  #print-slip{display:block;position:absolute;left:0;top:0;width:58mm;padding:3mm;font-family:monospace;color:#000}
+}
+
+/* 手機響應式：轉為單欄並讓預覽放在下方 */
+@media (max-width: 900px){
+  .pos-grid{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto}
+  .receipt-items{min-height:180px}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- 頂部列 -->
+  <div class="header-bar">
+    <div class="header-title-box">
+      <h1>WUYI 梧藝 • 櫃檯快速結帳系統</h1>
+    </div>
+    <div class="top-tools">
+      <span class="order-badge" id="today-order-count">今日訂單: 0 筆</span>
+    </div>
+  </div>
+
+  <div class="pos-grid">
+    <!-- 左欄表單區 -->
+    <div class="order-form-column">
+
+      <!-- 1. 顧客資訊與記錄者 -->
+      <div class="card" style="margin-bottom:0">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+          <input type="text" class="input" id="c-name" placeholder="顧客姓名 (可選)">
+          <input type="tel" class="input" id="c-phone" placeholder="電話後三碼/電話 (可選)">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1.15fr;gap:6px;align-items:center">
+          <div class="btn-group" id="grp-pay">
+            <button class="btn active" onclick="selBtn(this,'pay',0)">現金</button>
+            <button class="btn" onclick="selBtn(this,'pay',0)">Line Pay</button>
+            <button class="btn" onclick="selBtn(this,'pay',0)">轉帳</button>
+          </div>
+          <div style="display:flex;gap:3px;align-items:center">
+            <div class="btn-group" id="grp-op" style="flex:1;gap:3px">
+              <button class="btn active" style="padding:4px 2px;font-size:11px;min-width:32px" onclick="selOpBtn(this,'櫃檯')">櫃檯</button>
+              <button class="btn" style="padding:4px 2px;font-size:11px;min-width:32px" onclick="selOpBtn(this,'Nikki')">Nikki</button>
+              <button class="btn" style="padding:4px 2px;font-size:11px;min-width:32px" onclick="selOpBtn(this,'Vivian')">Vivian</button>
+              <button class="btn" style="padding:4px 2px;font-size:11px;min-width:32px" onclick="selOpBtn(this,'Leon')">Leon</button>
+            </div>
+            <input type="text" class="input" id="op-custom" placeholder="其他" oninput="onOpCustom()" style="width:48px;flex:0 0 48px;padding:4px;font-size:11px;text-align:center">
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 🌸 鮮花款式規格配置 -->
+      <div class="card flower-card">
+        <div class="card-header" style="color:var(--f);margin-bottom:4px">
+          <span>🌸 鮮花款式規格配置</span>
+          <span id="fl-pill" style="background:var(--f);color:#fff;padding:2px 8px;border-radius:8px;font-size:12px;font-weight:800">$0</span>
+        </div>
+
+        <!-- ① 款式選擇 -->
+        <div class="flower-row">
+          <div class="flower-title"><span>① 款式選擇</span></div>
+          <div class="btn-group" id="grp-fl-style">
+            <button class="btn active" onclick="setFlStyle(this,'精緻')">精緻</button>
+            <button class="btn" onclick="setFlStyle(this,'透包')">透包</button>
+            <button class="btn" onclick="setFlSpec(this,'甜筒 S',500)">甜筒 S ($500)</button>
+            <button class="btn" onclick="setFlSpec(this,'甜筒 M',700)">甜筒 M ($700)</button>
+            <button class="btn" onclick="setFlSpec(this,'甜筒 L',900)">甜筒 L ($900)</button>
+            <button class="btn" onclick="setFlSpec(this,'條紋 S',680)">條紋 S ($680)</button>
+            <button class="btn" onclick="setFlSpec(this,'條紋 M',880)">條紋 M ($880)</button>
+            <button class="btn" onclick="setFlSpec(this,'條紋 L',1200)">條紋 L ($1200)</button>
+            <button class="btn" onclick="setFlSpec(this,'點點包裝',1150)">點點包裝 ($1150)</button>
+            <button class="btn" onclick="setFlStyle(this,'無鮮花')">無鮮花</button>
+          </div>
+        </div>
+
+        <!-- 甜筒硬紙 -->
+        <div id="row-hard" style="display:none;background:#f1edff;padding:4px 8px;border-radius:6px;border:1px dashed #7d5fff;margin-bottom:4px">
+          <div class="flower-title" style="margin:0"><span>🍦 甜筒專用：材質選項</span><span class="tag-fee">硬紙 +50 元</span></div>
+          <div class="btn-group" id="grp-hard">
+            <button class="btn active" onclick="setHard(this,0)">一般 ($0)</button>
+            <button class="btn" onclick="setHard(this,50)">硬紙 (+50)</button>
+          </div>
+        </div>
+
+        <!-- ② 色系選擇 -->
+        <div class="flower-row" id="sec-color">
+          <div class="flower-title">
+            <span>② 色系選擇 <span id="color-count-tag" class="color-badge">(最多3種: 0/3)</span></span>
+            <span class="tag-free">免費</span>
+          </div>
+          <div class="btn-group" id="grp-fl-color"></div>
+          <div class="other-input-box" id="box-color-other">
+            <input type="text" class="input" id="color-other-text" placeholder="✏️ 請填寫其他色系 (例: 奶茶、香檳、霧灰...)" oninput="onColorOtherInput()">
+          </div>
+        </div>
+
+        <!-- ③ 襯紙選項 -->
+        <div class="flower-row" id="sec-tissue">
+          <div class="flower-title">
+            <span>③ 襯紙選項 <span id="tissue-grid-tip" style="font-size:10px;color:#747d8c;font-weight:normal">(純色襯紙 / 選網格可複選1色)</span> <span id="tip-tissue" style="display:none;color:#ff4757;font-size:9.5px">(此款式不適用)</span></span>
+            <span class="tag-fee">+100 元</span>
+          </div>
+          <div class="btn-group" id="grp-fl-tissue"></div>
+          <div class="other-input-box" id="box-tissue-other">
+            <input type="text" class="input" id="tissue-other-text" placeholder="✏️ 請填寫其他襯紙名稱 (+100)" oninput="onTissueOtherInput()">
+          </div>
+        </div>
+
+        <!-- ④ 包裝選項 -->
+        <div class="flower-row" id="sec-wrap">
+          <div class="flower-title">
+            <span>④ 包裝選項 <span id="tip-wrap" style="display:none;color:#ff4757;font-size:9.5px"></span></span>
+            <span class="tag-free">免費</span>
+          </div>
+          <div class="btn-group" id="grp-fl-wrap"></div>
+          <div class="other-input-box" id="box-wrap-other">
+            <input type="text" class="input" id="wrap-other-text" placeholder="✏️ 請填寫其他包裝材質/名稱" oninput="onWrapOtherInput()">
+          </div>
+        </div>
+
+        <!-- ⑤ 鮮花價格 -->
+        <div class="flower-row" id="sec-price" style="margin-bottom:0">
+          <div class="flower-title">
+            <span>⑤ 鮮花價格 <span id="fl-price-tip" style="font-weight:normal;color:#666"></span></span>
+            <span id="tip-price" style="display:none;color:#ff4757;font-size:9.5px">(定價花束不可選)</span>
+          </div>
+          <div style="display:flex;gap:4px;align-items:center">
+            <div class="btn-group" id="grp-fl-price" style="flex:2.8"></div>
+            <input type="number" class="input" id="fl-custom" placeholder="自訂金額" oninput="onFlCustom()" style="flex:1">
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 漢堡盒 / 提袋保冰袋 -->
+      <div class="r2c" style="display:grid;grid-template-columns:1.2fr 1fr;gap:6px;margin-bottom:0">
+        <div class="card" style="margin:0">
+          <div class="card-header"><span>🍔 漢堡盒價格</span></div>
+          <div style="display:flex;gap:4px">
+            <div class="btn-group" id="grp-burger" style="flex:2.2">
+              <button class="btn active" onclick="selBtn(this,'burger',0)">無</button>
+              <button class="btn" onclick="selBtn(this,'burger',680)">680</button>
+              <button class="btn" onclick="selBtn(this,'burger',700)">700</button>
+              <button class="btn" onclick="selBtn(this,'burger',720)">720</button>
+            </div>
+            <input type="number" min="0" class="input" id="burger-custom" placeholder="自訂" oninput="onCustomGrp('burger')" style="flex:1">
+          </div>
+        </div>
+        <div class="card" style="margin:0">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+            <div>
+              <div class="card-header" style="font-size:11.5px">
+                <span>🛍️ 提袋($40)</span>
+                <span id="bag-inc-tag" style="display:none;font-size:9.5px;color:#2ed573;font-weight:bold">(含)</span>
+              </div>
+              <div class="btn-group" id="grp-bag">
+                <button class="btn active" onclick="selBtn(this,'bag',0)">無</button>
+                <button class="btn" onclick="selBtn(this,'bag',40)">+40</button>
+                <button class="btn" onclick="selBtn(this,'bag',80)">+80</button>
+              </div>
+            </div>
+            <div>
+              <div class="card-header" style="font-size:11.5px"><span>🧊 保冰($100)</span></div>
+              <div class="btn-group" id="grp-cooler">
+                <button class="btn active" onclick="selBtn(this,'cooler',0)">無</button>
+                <button class="btn" onclick="selBtn(this,'cooler',100)">+100</button>
+                <button class="btn" onclick="selBtn(this,'cooler',200)">+200</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. 現貨4吋加單 + 餐具加購 -->
+      <div class="r2c" style="display:grid;grid-template-columns:1.35fr 1fr;gap:6px;margin-bottom:0">
+        <div class="card" style="margin:0">
+          <div class="card-header"><span>🎂 現貨4吋加單</span></div>
+          <div style="display:flex;gap:4px">
+            <div class="btn-group" id="grp-cake4" style="flex:2.6">
+              <button class="btn active" onclick="selBtn(this,'cake4',0)">無</button>
+              <button class="btn" onclick="selBtn(this,'cake4',1000)">1000</button>
+              <button class="btn" onclick="selBtn(this,'cake4',1060)">1060</button>
+              <button class="btn" onclick="selBtn(this,'cake4',1080)">1080</button>
+            </div>
+            <input type="number" min="0" class="input" id="cake4-custom" placeholder="自訂" oninput="onCustomGrp('cake4')" style="flex:1">
+          </div>
+        </div>
+        <div class="card" style="margin:0">
+          <div class="card-header"><span>🍴 餐具加購</span></div>
+          <div style="display:flex;gap:4px">
+            <div class="btn-group" id="grp-utensils" style="flex:2.2">
+              <button class="btn active" onclick="selBtn(this,'utensils',0)">無</button>
+              <button class="btn" onclick="selBtn(this,'utensils',15)">15</button>
+              <button class="btn" onclick="selBtn(this,'utensils',30)">30</button>
+              <button class="btn" onclick="selBtn(this,'utensils',50)">50</button>
+            </div>
+            <input type="number" min="0" class="input" id="utensils-custom" placeholder="自訂" oninput="onCustomGrp('utensils')" style="flex:1">
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. 其他加購（蠟燭/道具，支援複選累加） + 客製化備註 -->
+      <div class="r2c" style="display:grid;grid-template-columns:1.5fr 0.85fr;gap:6px;margin-bottom:0">
+        <div class="card" style="margin:0">
+          <div class="card-header">
+            <span>🕯️ 其他加購（蠟燭/道具）<span class="tag-free" style="background:#2ed573;color:#fff;margin-left:3px">可複選累加</span></span>
+            <span style="font-size:10px;color:#747d8c;font-weight:normal">按一次加一筆</span>
+          </div>
+          <div style="display:flex;gap:4px;align-items:center">
+            <div class="btn-group" id="grp-extra" style="flex:3.3">
+              <button class="btn active" id="extra-btn-0" onclick="clrExtra()">無</button>
+              <button class="btn" data-extra="45" onclick="addExtra(45)">45</button>
+              <button class="btn" data-extra="55" onclick="addExtra(55)">55</button>
+              <button class="btn" data-extra="89" onclick="addExtra(89)">89</button>
+              <button class="btn" data-extra="99" onclick="addExtra(99)">99</button>
+            </div>
+            <input type="number" min="0" class="input" id="extra-custom" placeholder="自訂" oninput="onExCustom()" onkeydown="if(event.key==='Enter'){event.preventDefault();commitExCustom();}" style="flex:0.9">
+            <button type="button" class="btn" onclick="commitExCustom()" title="將自訂金額加入明細" style="flex:0 0 28px;min-width:28px;padding:5px 2px;background:#f1f2f6">＋</button>
+          </div>
+        </div>
+        <div class="card" style="margin:0">
+          <div class="card-header"><span>📝 客製化備註</span></div>
+          <input type="text" class="input" id="c-remark" placeholder="備註 / 卡片內容..." oninput="updatePreview()">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 右欄收銀台：與左欄高度拉齊一致、明細格子加大 -->
+    <div class="sidebar">
+      <div class="receipt-card">
+        <div class="receipt-title">
+          <span>🧾 明細預覽</span>
+          <div style="display:flex;align-items:center;gap:4px">
+            <button type="button" class="btn-undo-item" onclick="undoLastPreviewItem()" title="刪除最後加入的一個明細項目">↩️ 刪除上一個明細</button>
+            <span id="prev-pay" style="font-size:11px;background:#e2e8f0;padding:2px 7px;border-radius:4px;font-weight:700">現金</span>
+          </div>
+        </div>
+
+        <!-- 明細項目容器：自動擴展彈性高度 -->
+        <div class="receipt-items" id="live-list">
+          <div style="text-align:center;color:#94a3b8;padding:60px 0;font-size:13px">尚無選擇任何品項</div>
+        </div>
+
+        <!-- 應付與找零金額 -->
+        <div class="calc-box">
+          <div class="calc-stat">
+            <span class="calc-lbl">應付總額</span>
+            <span class="calc-val total" id="disp-total">$0</span>
+          </div>
+          <div class="calc-stat">
+            <span class="calc-lbl" id="lbl-change">找零金額</span>
+            <span class="calc-val change" id="disp-change">$0</span>
+          </div>
+        </div>
+
+        <!-- 實收金額快選 -->
+        <div style="margin-bottom:8px">
+          <input type="number" class="input" id="m-received" placeholder="實收金額 (點按快選)" oninput="calcTotal()" style="font-size:16px;font-weight:800;text-align:center;padding:6px;height:38px">
+          <div class="quick-cash">
+            <button class="quick-btn" onclick="setExact()">剛好</button>
+            <button class="quick-btn" onclick="setCash(500)">500</button>
+            <button class="quick-btn" onclick="setCash(1000)">1000</button>
+            <button class="quick-btn" onclick="clrCash()">清除</button>
+          </div>
+        </div>
+
+        <!-- 結帳送出 -->
+        <button type="button" class="btn-submit-main" id="btn-submit" onclick="submitOrder()">✅ 結帳送出 (寫入試算表並複製明細)</button>
+        <div class="status-bar" id="status-msg"></div>
+
+        <!-- 補印收據與重製 -->
+        <div class="sec-actions">
+          <button type="button" class="btn-sec" onclick="printSlip()">🖨️ 補印收據</button>
+          <button type="button" class="btn-sec" onclick="sendToLine()">📋 複製明細</button>
+          <button type="button" class="btn-sec" onclick="resetAll()">🔄 清除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="print-slip"></div>
+
+<script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbzl0Scogh2exJdyypZWywoA5gUhdEYexfRPURBxAaA7USOB-kUkv9vLUee_6fPBG6SjiA/exec";
+const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSe93-zPd6A2paFT8L0MAem_1b7ySOUlju4ElNDw5tJGGhBHfg/formResponse";
+const STORAGE_KEY = "wuyi_orders";
+const OP_KEY = "wuyi_operator";
+
+let isSubmitting = false;
+let lastOrderMsg = "";
+let lastSlipHtml = "";
+let curOp = "櫃檯";
+let lastOpBtn = "櫃檯";
+let extraItems = [];
+let extraSeq = 0;
+let itemHistory = [];
+
+let fl = {
+  style: '精緻',
+  isSpec: false,
+  base: 0,
+  hard: 0,
+  colors: ['無指定'],
+  color: '無指定',
+  tissue: '無襯紙 ($0)',
+  tFee: 0,
+  wrap: '無指定'
+};
+
+let itemVal = { burger: 0, cake4: 0, bag: 0, cooler: 0, utensils: 0 };
+
+const e = id => document.getElementById(id);
+const fmt = n => (parseFloat(n) || 0).toLocaleString('zh-TW');
+const escH = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// ──────────────────────────────────────────────
+// EMOJI 去除函式 (確保傳送至 Google 試算表時絕無任何 Emoji)
+// ──────────────────────────────────────────────
+function stripEmoji(val) {
+  if (val === null || val === undefined) return '';
+  let s = String(val);
+  try {
+    s = s.replace(/[\p{Extended_Pictographic}\uFE00-\uFE0F\u200D\u20E3\u2190-\u21FF\u2300-\u23FF\u2600-\u27BF\u2B50\u2B55]/gu, '');
+  } catch (err) {
+    s = s.replace(/[\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u27BF\uFE00-\uFE0F]/g, '');
+  }
+  return s.trim();
+}
+
+function stripEmojiMultiLine(val) {
+  if (val === null || val === undefined) return '';
+  let s = String(val);
+  try {
+    s = s.replace(/[\p{Extended_Pictographic}\uFE00-\uFE0F\u200D\u20E3\u2190-\u21FF\u2300-\u23FF\u2600-\u27BF\u2B50\u2B55]/gu, '');
+  } catch (err) {
+    s = s.replace(/[\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u27BF\uFE00-\uFE0F]/g, '');
+  }
+  return s.replace(/[ \t]{2,}/g, ' ');
+}
+
+function showMsg(txt, color = '#2f3542') {
+  let s = e('status-msg');
+  if (!s) return;
+  s.style.color = color;
+  s.textContent = txt;
+  setTimeout(() => { if (s.textContent === txt) s.textContent = ''; }, 2500);
+}
+
+function touchHist(kind, active) {
+  itemHistory = itemHistory.filter(h => h.kind !== kind);
+  if (active) itemHistory.push({ kind });
+}
+
+// 判斷款式是否已包含提袋
+function isBagIncludedStyle(st) {
+  return st === '精緻' || (st && st.startsWith('條紋'));
+}
+
+function updateBagTag() {
+  let tag = e('bag-inc-tag');
+  if (tag) {
+    let inc = isBagIncludedStyle(fl.style);
+    tag.style.display = inc ? 'inline' : 'none';
+    tag.textContent = inc ? '(已含提袋)' : '';
+  }
+}
+
+// ──────────────────────────────────────────────
+// 色系按鈕定義與動態渲染 (所有款式色系選擇選項跟精緻一樣，最多選3種)
+// ──────────────────────────────────────────────
+const ALL_COLORS = [
+  { c: 'none', n: '無指定' },
+  { c: 'white', n: '白' },
+  { c: 'green', n: '綠' },
+  { c: 'blue', n: '藍' },
+  { c: 'pink', n: '粉' },
+  { c: 'yellow', n: '黃' },
+  { c: 'purple', n: '紫' },
+  { c: 'orange', n: '橘' },
+  { c: 'black', n: '黑' },
+  { c: 'rice', n: '米' },
+  { c: 'other', n: '其他' }
+];
+
+function updateColorBadge() {
+  let countEl = e('color-count-tag');
+  if (!countEl) return;
+  if (fl.style === '無鮮花') {
+    countEl.textContent = '(不適用)';
+    countEl.style.color = '#747d8c';
+  } else {
+    let activeColors = fl.colors.filter(c => c !== '無指定');
+    let n = activeColors.length;
+    countEl.textContent = '(最多3種: ' + n + '/3)';
+    countEl.style.color = n >= 3 ? '#ff4757' : '#8854d0';
+  }
+}
+
+function renderColorBtns() {
+  let grp = e('grp-fl-color');
+  let boxOther = e('box-color-other');
+  if (!grp) return;
+
+  if (fl.style === '無鮮花') {
+    fl.colors = ['無鮮花'];
+    fl.color = '無鮮花';
+    if (boxOther) boxOther.style.display = 'none';
+    grp.innerHTML = '<button type="button" class="btn color-btn c-none active">不適用</button>';
+    updateColorBadge();
+    return;
+  }
+
+  // 精緻、點點包裝、條紋、甜筒、透包：色系選擇選項均相同，最多選3種
+  let hasOther = fl.colors.some(c => c.startsWith('其他'));
+  if (boxOther) boxOther.style.display = hasOther ? 'block' : 'none';
+
+  grp.innerHTML = ALL_COLORS.map(x => {
+    let isAct = false;
+    if (x.n === '無指定') isAct = fl.colors.includes('無指定');
+    else if (x.n === '其他') isAct = hasOther;
+    else isAct = fl.colors.includes(x.n);
+    return '<button type="button" class="btn color-btn c-' + x.c + (isAct ? ' active' : '') + '" data-cname="' + x.n + '" onclick="selColorMulti(this,\'' + x.n + '\')">' + x.n + '</button>';
+  }).join('');
+  updateColorBadge();
+}
+
+function selColorMulti(btn, val) {
+  if (fl.style === '無鮮花') return;
+
+  let grp = e('grp-fl-color');
+  let boxOther = e('box-color-other');
+
+  if (val === '無指定') {
+    grp.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    fl.colors = ['無指定'];
+    if (boxOther) boxOther.style.display = 'none';
+    if (e('color-other-text')) e('color-other-text').value = '';
+  } else {
+    let noneBtn = grp.querySelector('.c-none');
+    if (noneBtn) noneBtn.classList.remove('active');
+
+    let isAct = btn.classList.contains('active');
+    let currentAct = Array.from(grp.querySelectorAll('.btn.active')).filter(b => b.getAttribute('data-cname') !== '無指定');
+
+    // 限制混搭最多 3 種
+    if (!isAct) {
+      if (currentAct.length >= 3) {
+        showMsg('⚠️ 花束色系混搭最多只能選擇 3 種！', '#ff4757');
+        return;
+      }
+      btn.classList.add('active');
+      if (val === '其他') {
+        if (boxOther) {
+          boxOther.style.display = 'block';
+          let inp = e('color-other-text');
+          if (inp) inp.focus();
+        }
+      }
+    } else {
+      btn.classList.remove('active');
+      if (val === '其他') {
+        if (boxOther) boxOther.style.display = 'none';
+        if (e('color-other-text')) e('color-other-text').value = '';
+      }
+    }
+
+    let act = Array.from(grp.querySelectorAll('.btn.active')).filter(b => b.getAttribute('data-cname') !== '無指定');
+    if (act.length === 0) {
+      if (noneBtn) noneBtn.classList.add('active');
+      fl.colors = ['無指定'];
+      if (boxOther) boxOther.style.display = 'none';
+    } else {
+      fl.colors = act.map(b => {
+        let cn = b.getAttribute('data-cname') || b.textContent.trim();
+        if (cn === '其他') {
+          let oVal = e('color-other-text') ? e('color-other-text').value.trim() : '';
+          return oVal ? ('其他:' + oVal) : '其他';
+        }
+        return cn;
+      });
+    }
+  }
+
+  fl.color = fl.colors.join('+');
+  updateColorBadge();
+  updatePreview();
+}
+
+function onColorOtherInput() {
+  let oVal = e('color-other-text') ? e('color-other-text').value.trim() : '';
+  fl.colors = fl.colors.map(c => c.startsWith('其他') ? (oVal ? ('其他:' + oVal) : '其他') : c);
+  fl.color = fl.colors.join('+');
+  updatePreview();
+}
+
+// ──────────────────────────────────────────────
+// 襯紙選項：網格 vs 純色 動態切換 (僅精緻與透包適用)
+// ──────────────────────────────────────────────
+const MESH_TISSUE_LIST = [
+  { c: 'black', n: '黑' },
+  { c: 'purple', n: '紫' },
+  { c: 'pink', n: '粉' },
+  { c: 'green', n: '綠' },
+  { c: 'yellow', n: '黃' },
+  { c: 'rice', n: '米' },
+  { c: 'white', n: '白' },
+  { c: 'other', n: '其他' }
+];
+
+const PURE_TISSUE_LIST = [
+  { c: 'black', n: '黑 (+100)' },
+  { c: 'purple', n: '紫 (+100)' },
+  { c: 'pink', n: '粉 (+100)' },
+  { c: 'green', n: '綠 (+100)' },
+  { c: 'rice', n: '米 (+100)' },
+  { c: 'white', n: '白 (+100)' },
+  { c: 'blue', n: '藍 (+100)' },
+  { c: 'other', n: '其他 (+100)' }
+];
+
+function renderTissueBtns() {
+  let grp = e('grp-fl-tissue');
+  let tip = e('tissue-grid-tip');
+  let boxOther = e('box-tissue-other');
+  if (!grp) return;
+
+  let isMesh = fl.tissue.includes('網格');
+  let hasFee = fl.tFee > 0;
+
+  let html = '';
+  html += '<button type="button" class="btn color-btn c-none' + (!hasFee ? ' active' : '') + '" onclick="setTissueNone()">無襯紙 ($0)</button>';
+  html += '<button type="button" class="btn color-btn c-grid' + (isMesh ? ' active' : '') + '" onclick="toggleTissueGrid()">網格 (+100)</button>';
+
+  if (isMesh) {
+    if (tip) tip.textContent = '(網格襯紙可選底襯: 黑、紫、粉、綠、黃、米、白)';
+    let curColor = fl.tissue.replace('網格+', '').replace('網格', '').replace(' (+100)', '').trim();
+    let hasOther = curColor.startsWith('其他');
+    if (boxOther) boxOther.style.display = hasOther ? 'block' : 'none';
+
+    html += MESH_TISSUE_LIST.map(x => {
+      let isAct = (x.n === '其他' && hasOther) || (curColor === x.n);
+      return '<button type="button" class="btn color-btn c-' + x.c + (isAct ? ' active' : '') + '" onclick="selTissueColor(\'' + x.n + '\', true)">' + x.n + '</button>';
+    }).join('');
+  } else {
+    if (tip) tip.textContent = '(純色襯紙色系: 黑、紫、粉、綠、米、白、藍)';
+    let curColor = fl.tissue.replace(' (+100)', '').trim();
+    let hasOther = curColor.startsWith('其他');
+    if (boxOther) boxOther.style.display = hasOther ? 'block' : 'none';
+
+    html += PURE_TISSUE_LIST.map(x => {
+      let rawName = x.n.replace(' (+100)', '').trim();
+      let isAct = hasFee && ((rawName === '其他' && hasOther) || (curColor === rawName));
+      return '<button type="button" class="btn color-btn c-' + x.c + (isAct ? ' active' : '') + '" onclick="selTissueColor(\'' + rawName + '\', false)">' + x.n + '</button>';
+    }).join('');
+  }
+
+  grp.innerHTML = html;
+}
+
+function setTissueNone() {
+  fl.tissue = '無襯紙 ($0)';
+  fl.tFee = 0;
+  let boxOther = e('box-tissue-other');
+  if (boxOther) boxOther.style.display = 'none';
+  if (e('tissue-other-text')) e('tissue-other-text').value = '';
+  renderTissueBtns();
+  touchHist('flower', getFlTotal() > 0);
+  calcTotal();
+}
+
+function toggleTissueGrid() {
+  let isMesh = fl.tissue.includes('網格');
+  let curColor = '';
+
+  if (isMesh) {
+    curColor = fl.tissue.replace('網格+', '').replace('網格', '').replace(' (+100)', '').trim();
+    if (curColor && curColor !== '黃') {
+      fl.tissue = curColor + ' (+100)';
+      fl.tFee = 100;
+    } else {
+      fl.tissue = '無襯紙 ($0)';
+      fl.tFee = 0;
+    }
+  } else {
+    curColor = fl.tissue.replace(' (+100)', '').trim();
+    fl.tFee = 100;
+    if (curColor && curColor !== '無襯紙 ($0)' && curColor !== '藍') {
+      fl.tissue = '網格+' + curColor + ' (+100)';
+    } else {
+      fl.tissue = '網格 (+100)';
+    }
+  }
+
+  renderTissueBtns();
+  touchHist('flower', getFlTotal() > 0);
+  calcTotal();
+}
+
+function selTissueColor(colorName, isMesh) {
+  let boxOther = e('box-tissue-other');
+  fl.tFee = 100;
+
+  if (colorName === '其他') {
+    if (boxOther) {
+      boxOther.style.display = 'block';
+      let inp = e('tissue-other-text');
+      if (inp) inp.focus();
+    }
+    let oVal = e('tissue-other-text') ? e('tissue-other-text').value.trim() : '';
+    let valStr = oVal ? ('其他:' + oVal) : '其他';
+    fl.tissue = isMesh ? ('網格+' + valStr + ' (+100)') : (valStr + ' (+100)');
+  } else {
+    if (boxOther) {
+      boxOther.style.display = 'none';
+      if (e('tissue-other-text')) e('tissue-other-text').value = '';
+    }
+
+    if (isMesh) {
+      let curColor = fl.tissue.replace('網格+', '').replace('網格', '').replace(' (+100)', '').trim();
+      if (curColor === colorName) {
+        fl.tissue = '網格 (+100)';
+      } else {
+        fl.tissue = '網格+' + colorName + ' (+100)';
+      }
+    } else {
+      let curColor = fl.tissue.replace(' (+100)', '').trim();
+      if (curColor === colorName) {
+        fl.tissue = '無襯紙 ($0)';
+        fl.tFee = 0;
+      } else {
+        fl.tissue = colorName + ' (+100)';
+      }
+    }
+  }
+
+  renderTissueBtns();
+  touchHist('flower', getFlTotal() > 0);
+  calcTotal();
+}
+
+function onTissueOtherInput() {
+  let oVal = e('tissue-other-text') ? e('tissue-other-text').value.trim() : '';
+  let valStr = oVal ? ('其他:' + oVal) : '其他';
+  let isMesh = fl.tissue.includes('網格');
+  fl.tissue = isMesh ? ('網格+' + valStr + ' (+100)') : (valStr + ' (+100)');
+  fl.tFee = 100;
+  calcTotal();
+}
+
+// ──────────────────────────────────────────────
+// 包裝選項依款式專屬定義：
+// 1. 精緻: 完整色系選項
+// 2. 點點包裝: 只有一種白色
+// 3. 條紋 S M L: 單選 藍、黃、粉
+// 4. 甜筒 S M L 一般: 單選 紫、黃、粉、小花
+// 5. 甜筒 S M L 硬紙: 單選 藍、黃、粉、綠
+// ──────────────────────────────────────────────
+const STRIPE_WRAP_COLORS = [
+  { c: 'blue', n: '藍' },
+  { c: 'yellow', n: '黃' },
+  { c: 'pink', n: '粉' }
+];
+
+const CONE_SOFT_WRAP_COLORS = [
+  { c: 'purple', n: '紫' },
+  { c: 'yellow', n: '黃' },
+  { c: 'pink', n: '粉' },
+  { c: 'flower', n: '小花' }
+];
+
+const CONE_HARD_WRAP_COLORS = [
+  { c: 'blue', n: '藍' },
+  { c: 'yellow', n: '黃' },
+  { c: 'pink', n: '粉' },
+  { c: 'green', n: '綠' }
+];
+
+function renderWrapBtns() {
+  let grp = e('grp-fl-wrap');
+  let boxOther = e('box-wrap-other');
+  if (!grp) return;
+
+  if (fl.style === '無鮮花') {
+    fl.wrap = '無指定';
+    if (boxOther) boxOther.style.display = 'none';
+    grp.innerHTML = '<button type="button" class="btn c-none active">不適用</button>';
+    return;
+  }
+
+  if (fl.style === '透包') {
+    fl.wrap = '透明';
+    if (boxOther) boxOther.style.display = 'none';
+    grp.innerHTML = '<button type="button" class="btn active" style="cursor:default">透明包裝</button>';
+    return;
+  }
+
+  // ２．點點包裝：包裝只有一種白色
+  if (fl.style === '點點包裝') {
+    fl.wrap = '白色';
+    if (boxOther) boxOther.style.display = 'none';
+    grp.innerHTML = '<button type="button" class="btn color-btn c-white active" style="cursor:default">白色 (固定)</button>';
+    return;
+  }
+
+  // ３．條紋Ｓ Ｍ Ｌ：包裝選項只能其中選一種 藍 黃 粉
+  if (fl.style.startsWith('條紋')) {
+    let valid = ['藍', '黃', '粉'];
+    if (!valid.includes(fl.wrap)) fl.wrap = '藍';
+    if (boxOther) boxOther.style.display = 'none';
+    grp.innerHTML = STRIPE_WRAP_COLORS.map(x =>
+      '<button type="button" class="btn color-btn c-' + x.c + (fl.wrap === x.n ? ' active' : '') + '" onclick="selWrap(\'' + x.n + '\')">' + x.n + '</button>'
+    ).join('');
+    return;
+  }
+
+  // ４．甜筒Ｓ Ｍ Ｌ 一般：包裝選項只能其中選一種 紫 黃 粉 小花
+  // ５．甜筒Ｓ Ｍ Ｌ 硬紙：包裝選項只能其中選一種 藍 黃 粉 綠
+  if (fl.style.startsWith('甜筒')) {
+    if (boxOther) boxOther.style.display = 'none';
+    if (fl.hard === 50) {
+      let valid = ['藍', '黃', '粉', '綠'];
+      if (!valid.includes(fl.wrap)) fl.wrap = '粉';
+      grp.innerHTML = CONE_HARD_WRAP_COLORS.map(x =>
+        '<button type="button" class="btn color-btn c-' + x.c + (fl.wrap === x.n ? ' active' : '') + '" onclick="selWrap(\'' + x.n + '\')">' + x.n + '</button>'
+      ).join('');
+    } else {
+      let valid = ['紫', '黃', '粉', '小花'];
+      if (!valid.includes(fl.wrap)) fl.wrap = '粉';
+      grp.innerHTML = CONE_SOFT_WRAP_COLORS.map(x =>
+        '<button type="button" class="btn color-btn c-' + x.c + (fl.wrap === x.n ? ' active' : '') + '" onclick="selWrap(\'' + x.n + '\')">' + x.n + '</button>'
+      ).join('');
+    }
+    return;
+  }
+
+  // １．精緻：保留完整包裝顏色選項
+  let hasOther = fl.wrap.startsWith('其他');
+  if (boxOther) boxOther.style.display = hasOther ? 'block' : 'none';
+
+  grp.innerHTML = ALL_COLORS.map(x => {
+    let isAct = (x.n === '其他' && hasOther) || (fl.wrap === x.n);
+    return '<button type="button" class="btn color-btn c-' + x.c + (isAct ? ' active' : '') + '" onclick="selWrap(\'' + x.n + '\')">' + x.n + '</button>';
+  }).join('');
+}
+
+function selWrap(val) {
+  let boxOther = e('box-wrap-other');
+  if (val === '其他') {
+    if (boxOther) {
+      boxOther.style.display = 'block';
+      let inp = e('wrap-other-text');
+      if (inp) inp.focus();
+    }
+    let oVal = e('wrap-other-text') ? e('wrap-other-text').value.trim() : '';
+    fl.wrap = oVal ? ('其他:' + oVal) : '其他';
+  } else {
+    if (boxOther) {
+      boxOther.style.display = 'none';
+      if (e('wrap-other-text')) e('wrap-other-text').value = '';
+    }
+    fl.wrap = val;
+  }
+  renderWrapBtns();
+  updatePreview();
+}
+
+function onWrapOtherInput() {
+  let oVal = e('wrap-other-text') ? e('wrap-other-text').value.trim() : '';
+  fl.wrap = oVal ? ('其他:' + oVal) : '其他';
+  updatePreview();
+}
+
+// ──────────────────────────────────────────────
+// 各專區啟用/禁用狀態獨立更新
+// ──────────────────────────────────────────────
+function updateFlSectionStates() {
+  let isNoFlower = (fl.style === '無鮮花');
+  let isSpec = fl.isSpec; // 甜筒, 條紋, 點點包裝
+
+  // 1. 色系
+  let secColor = e('sec-color');
+  if (secColor) {
+    if (isNoFlower) secColor.classList.add('disabled-box');
+    else secColor.classList.remove('disabled-box');
+  }
+
+  // 2. 襯紙 (只有精緻與透包適用)
+  let secTissue = e('sec-tissue');
+  let tipTissue = e('tip-tissue');
+  if (secTissue) {
+    if (isNoFlower || isSpec) {
+      secTissue.classList.add('disabled-box');
+      if (tipTissue) {
+        tipTissue.textContent = '(此款式不適用)';
+        tipTissue.style.display = 'inline';
+      }
+    } else {
+      secTissue.classList.remove('disabled-box');
+      if (tipTissue) tipTissue.style.display = 'none';
+    }
+  }
+
+  // 3. 包裝 (精緻、透包、甜筒、條紋、點點包裝均可用，僅無鮮花不適用)
+  let secWrap = e('sec-wrap');
+  let tipWrap = e('tip-wrap');
+  if (secWrap) {
+    if (isNoFlower) {
+      secWrap.classList.add('disabled-box');
+      if (tipWrap) {
+        tipWrap.textContent = '(此款式不適用)';
+        tipWrap.style.display = 'inline';
+      }
+    } else {
+      secWrap.classList.remove('disabled-box');
+      if (tipWrap) {
+        if (fl.style === '透包') {
+          tipWrap.textContent = '(固定透明包裝)';
+          tipWrap.style.display = 'inline';
+        } else if (fl.style === '點點包裝') {
+          tipWrap.textContent = '(固定白色包裝)';
+          tipWrap.style.display = 'inline';
+        } else if (fl.style.startsWith('條紋')) {
+          tipWrap.textContent = '(單選1種: 藍/黃/粉)';
+          tipWrap.style.display = 'inline';
+        } else if (fl.style.startsWith('甜筒')) {
+          tipWrap.textContent = (fl.hard === 50) ? '(硬紙單選1種: 藍/黃/粉/綠)' : '(一般單選1種: 紫/黃/粉/小花)';
+          tipWrap.style.display = 'inline';
+        } else {
+          tipWrap.style.display = 'none';
+        }
+      }
+    }
+  }
+
+  // 4. 價格 (定價花束與無鮮花不適用手動選擇)
+  let secPrice = e('sec-price');
+  let tipPrice = e('tip-price');
+  if (secPrice) {
+    if (isNoFlower || isSpec) {
+      secPrice.classList.add('disabled-box');
+      if (tipPrice) {
+        tipPrice.textContent = isSpec ? '(定價花束不可選)' : '(不適用)';
+        tipPrice.style.display = 'inline';
+      }
+    } else {
+      secPrice.classList.remove('disabled-box');
+      if (tipPrice) tipPrice.style.display = 'none';
+    }
+  }
+}
+
+// ──────────────────────────────────────────────
+// 款式與價格控制
+// ──────────────────────────────────────────────
+function renderFlPrices() {
+  let prices = fl.style === '精緻' ? [0, 1280, 1500, 1800] : [0, 390, 500, 600];
+  let hasC = e('fl-custom') && e('fl-custom').value !== '';
+  if (!hasC && !prices.includes(fl.base)) fl.base = 0;
+  e('fl-price-tip').textContent = fl.style === '精緻' ? '(精緻: 1280/1500/1800)' : '(透包: 390/500/600)';
+  e('grp-fl-price').innerHTML = prices.map(p =>
+    '<button type="button" class="btn ' + (!hasC && fl.base === p ? 'active' : '') + '" onclick="setFlBase(this,' + p + ')">' + (p === 0 ? '無 ($0)' : '$' + p) + '</button>'
+  ).join('');
+}
+
+function setFlStyle(btn, st) {
+  e('grp-fl-style').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  fl.style = st;
+  fl.isSpec = false;
+  fl.hard = 0;
+  e('row-hard').style.display = 'none';
+
+  if (st === '無鮮花') {
+    fl.base = 0; fl.tFee = 0; fl.tissue = '無襯紙 ($0)'; fl.wrap = '無指定'; fl.colors = ['無鮮花']; fl.color = '無鮮花';
+    if (e('fl-custom')) e('fl-custom').value = '';
+  } else {
+    if (fl.colors.includes('無鮮花')) { fl.colors = ['無指定']; fl.color = '無指定'; }
+    if (st === '精緻' && fl.wrap === '透明') fl.wrap = '無指定';
+    renderFlPrices();
+  }
+
+  updateFlSectionStates();
+  renderColorBtns();
+  renderTissueBtns();
+  renderWrapBtns();
+  updateBagTag();
+  touchHist('flower', getFlTotal() > 0);
+  calcTotal();
+}
+
+function setFlSpec(btn, st, pr) {
+  e('grp-fl-style').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  fl.style = st;
+  fl.isSpec = true;
+  fl.base = pr;
+  fl.tFee = 0;
+  fl.tissue = '無襯紙 ($0)';
+  if (fl.colors.includes('無鮮花')) { fl.colors = ['無指定']; fl.color = '無指定'; }
+  if (e('fl-custom')) e('fl-custom').value = '';
+
+  if (st.startsWith('甜筒')) {
+    e('row-hard').style.display = 'block';
+  } else {
+    e('row-hard').style.display = 'none';
+    fl.hard = 0;
+  }
+
+  updateFlSectionStates();
+  renderColorBtns();
+  renderTissueBtns();
+  renderWrapBtns();
+  updateBagTag();
+  touchHist('flower', getFlTotal() > 0);
+  calcTotal();
+}
+
+function setHard(btn, f) {
+  e('grp-hard').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  fl.hard = f;
+  renderWrapBtns();
+  updateFlSectionStates();
+  touchHist('flower', getFlTotal() > 0);
+  calcTotal();
+}
+
+function setFlBase(btn, p) {
+  e('grp-fl-price').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (e('fl-custom')) e('fl-custom').value = '';
+  fl.base = p;
+  touchHist('flower', getFlTotal() > 0);
+  calcTotal();
+}
+
+function onFlCustom() {
+  let v = parseFloat(e('fl-custom').value);
+  if (!isNaN(v) && v >= 0) {
+    fl.base = v;
+    e('grp-fl-price').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  } else {
+    fl.base = 0;
+    renderFlPrices();
+  }
+  touchHist('flower', getFlTotal() > 0);
+  calcTotal();
+}
+
+function rstGrpFirst(id) {
+  let g = e(id);
+  if (g) g.querySelectorAll('.btn').forEach((b, i) => { if (i === 0) b.classList.add('active'); else b.classList.remove('active'); });
+}
+
+function selBtn(btn, k, val) {
+  btn.closest('.btn-group').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  let cIn = e(k + '-custom');
+  if (cIn) cIn.value = '';
+  if (k === 'pay' && btn.textContent.trim() !== '現金') e('m-received').value = '';
+  if (k !== 'pay') {
+    itemVal[k] = val;
+    touchHist(k, getCustom(k + '-custom', k) > 0);
+  }
+  calcTotal();
+}
+
+function onCustomGrp(k) {
+  let cIn = e(k + '-custom'), grp = e('grp-' + k);
+  if (cIn && cIn.value !== '') {
+    if (parseFloat(cIn.value) < 0) cIn.value = 0;
+    if (grp) grp.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  } else if (grp) {
+    grp.querySelectorAll('.btn').forEach((b, i) => { if (i === 0) b.classList.add('active'); else b.classList.remove('active'); });
+    itemVal[k] = 0;
+  }
+  touchHist(k, getCustom(k + '-custom', k) > 0);
+  calcTotal();
+}
+
+// ──────────────────────────────────────────────
+// 其他加購（蠟燭/道具，支援複選累加）
+// ──────────────────────────────────────────────
+function addExtra(p) {
+  extraSeq++;
+  let it = { id: 'ex_' + extraSeq, price: p };
+  extraItems.push(it);
+  itemHistory.push({ kind: 'extra', id: it.id });
+  renderExtraBtns();
+  calcTotal();
+}
+
+function onExCustom() {
+  let el = e('extra-custom');
+  if (!el) return;
+  let v = parseFloat(el.value);
+  if (!isNaN(v) && v > 0) {
+    touchHist('extraCustom', true);
+  } else {
+    if (v < 0) el.value = '';
+    touchHist('extraCustom', false);
+  }
+  renderExtraBtns();
+  calcTotal();
+}
+
+function commitExCustom() {
+  let el = e('extra-custom');
+  if (!el) return;
+  let v = parseFloat(el.value);
+  if (!isNaN(v) && v > 0) {
+    el.value = '';
+    touchHist('extraCustom', false);
+    addExtra(v);
+  }
+}
+
+function clrExtra() {
+  extraItems = [];
+  if (e('extra-custom')) e('extra-custom').value = '';
+  itemHistory = itemHistory.filter(h => h.kind !== 'extra' && h.kind !== 'extraCustom');
+  renderExtraBtns();
+  calcTotal();
+}
+
+function renderExtraBtns() {
+  [45, 55, 89, 99].forEach(p => {
+    let btn = document.querySelector('#grp-extra [data-extra="' + p + '"]');
+    if (!btn) return;
+    let cnt = extraItems.filter(it => it.price === p).length;
+    if (cnt > 0) {
+      btn.classList.add('active');
+      btn.textContent = cnt > 1 ? (p + ' x' + cnt) : String(p);
+    } else {
+      btn.classList.remove('active');
+      btn.textContent = String(p);
+    }
+  });
+  let cv = e('extra-custom') ? (parseFloat(e('extra-custom').value) || 0) : 0;
+  let zb = e('extra-btn-0');
+  if (zb) {
+    if (extraItems.length === 0 && cv <= 0) zb.classList.add('active');
+    else zb.classList.remove('active');
+  }
+}
+
+function getExtraSum() {
+  let s = extraItems.reduce((a, it) => a + (parseFloat(it.price) || 0), 0);
+  let cv = e('extra-custom') ? Math.max(0, parseFloat(e('extra-custom').value) || 0) : 0;
+  return s + cv;
+}
+
+// ──────────────────────────────────────────────
+// 金額與明細核心計算
+// ──────────────────────────────────────────────
+function getFlTotal() {
+  if (fl.style === '無鮮花' || !fl.base || fl.base <= 0) return 0;
+  return Math.max(0, (fl.base || 0) + (fl.tFee || 0) + (fl.hard || 0));
+}
+
+function getCustom(id, k) {
+  if (k === 'extra') return getExtraSum();
+  let el = e(id);
+  if (el && el.value !== '') return Math.max(0, parseFloat(el.value) || 0);
+  return Math.max(0, itemVal[k] || 0);
+}
+
+function calcTotal() {
+  let flT = getFlTotal(),
+      bgT = getCustom('burger-custom', 'burger'),
+      ckT = getCustom('cake4-custom', 'cake4'),
+      bagT = itemVal.bag,
+      clrT = itemVal.cooler,
+      utT = getCustom('utensils-custom', 'utensils'),
+      exT = getExtraSum();
+  let grand = flT + bgT + ckT + bagT + clrT + utT + exT;
+
+  e('fl-pill').textContent = '$' + flT;
+  e('disp-total').textContent = '$' + grand;
+
+  let mVal = e('m-received').value;
+  let chEl = e('disp-change'), lbEl = e('lbl-change');
+  if (!mVal) {
+    chEl.textContent = '$0'; chEl.className = 'calc-val change'; lbEl.textContent = '找零金額';
+  } else {
+    let diff = (parseFloat(mVal) || 0) - grand;
+    if (diff >= 0) {
+      lbEl.textContent = '找零金額'; chEl.textContent = '$' + diff; chEl.className = 'calc-val change';
+    } else {
+      lbEl.textContent = '差額不足'; chEl.textContent = '$' + Math.abs(diff); chEl.className = 'calc-val shortage';
+    }
+  }
+  updatePreview();
+}
+
+function getOrderItems() {
+  let checks = [
+    { kind: 'flower', val: getFlTotal() },
+    { kind: 'burger', val: getCustom('burger-custom', 'burger') },
+    { kind: 'cake4', val: getCustom('cake4-custom', 'cake4') },
+    { kind: 'bag', val: itemVal.bag },
+    { kind: 'cooler', val: itemVal.cooler },
+    { kind: 'utensils', val: getCustom('utensils-custom', 'utensils') },
+    { kind: 'extraCustom', val: e('extra-custom') ? Math.max(0, parseFloat(e('extra-custom').value) || 0) : 0 }
+  ];
+  checks.forEach(c => {
+    let ex = itemHistory.some(h => h.kind === c.kind);
+    if (c.val > 0 && !ex) itemHistory.push({ kind: c.kind });
+    if (c.val <= 0 && ex) itemHistory = itemHistory.filter(h => h.kind !== c.kind);
+  });
+  itemHistory = itemHistory.filter(h => h.kind === 'extra' ? extraItems.some(it => it.id === h.id) : true);
+
+  let items = [];
+  itemHistory.forEach((h, idx) => {
+    if (h.kind === 'flower') {
+      let flT = getFlTotal();
+      if (flT > 0) {
+        let sp = [];
+        if (fl.color !== '無指定') sp.push('色系:' + fl.color);
+        if (fl.hard > 0) sp.push('硬紙(+50)');
+        if (fl.tFee > 0) sp.push('襯紙:' + fl.tissue);
+        if (fl.wrap !== '無指定' && fl.wrap) sp.push('包裝:' + fl.wrap);
+        items.push({ hIdx: idx, name: '鮮花 - ' + fl.style, desc: sp.join(' / '), price: flT });
+      }
+    } else if (h.kind === 'burger') {
+      let v = getCustom('burger-custom', 'burger'); if (v > 0) items.push({ hIdx: idx, name: '漢堡盒', desc: '', price: v });
+    } else if (h.kind === 'cake4') {
+      let v = getCustom('cake4-custom', 'cake4'); if (v > 0) items.push({ hIdx: idx, name: '現貨4吋加單', desc: '', price: v });
+    } else if (h.kind === 'bag') {
+      let v = itemVal.bag;
+      if (v > 0) {
+        let desc = isBagIncludedStyle(fl.style) ? ('款式已含提袋 + 額外加購 ' + (v / 40) + ' 個') : (v >= 80 ? '加購 x' + (v / 40) : '加購');
+        items.push({ hIdx: idx, name: '鮮花提袋', desc: desc, price: v });
+      }
+    } else if (h.kind === 'cooler') {
+      let v = itemVal.cooler; if (v > 0) items.push({ hIdx: idx, name: '保冰袋+劑', desc: v >= 200 ? '加購 x' + (v / 100) : '加購', price: v });
+    } else if (h.kind === 'utensils') {
+      let v = getCustom('utensils-custom', 'utensils'); if (v > 0) items.push({ hIdx: idx, name: '餐具加購', desc: '', price: v });
+    } else if (h.kind === 'extra') {
+      let f = extraItems.find(it => it.id === h.id); if (f) items.push({ hIdx: idx, name: '其他加購 (蠟燭/道具)', desc: '', price: f.price });
+    } else if (h.kind === 'extraCustom') {
+      let v = e('extra-custom') ? Math.max(0, parseFloat(e('extra-custom').value) || 0) : 0;
+      if (v > 0) items.push({ hIdx: idx, name: '其他加購 (自訂)', desc: '', price: v });
+    }
+  });
+  return items;
+}
+
+function resetByHist(ent) {
+  if (!ent) return;
+  if (ent.kind === 'extra') {
+    extraItems = extraItems.filter(it => it.id !== ent.id);
+    renderExtraBtns();
+  } else if (ent.kind === 'extraCustom') {
+    if (e('extra-custom')) e('extra-custom').value = '';
+    renderExtraBtns();
+  } else if (['burger', 'cake4', 'bag', 'cooler', 'utensils'].includes(ent.kind)) {
+    itemVal[ent.kind] = 0;
+    let cIn = e(ent.kind + '-custom'); if (cIn) cIn.value = '';
+    rstGrpFirst('grp-' + ent.kind);
+  } else if (ent.kind === 'flower') {
+    fl.base = 0; fl.tFee = 0; fl.hard = 0;
+    fl.tissue = '無襯紙 ($0)';
+    fl.colors = ['無指定']; fl.color = '無指定'; fl.wrap = '無指定';
+    if (e('fl-custom')) e('fl-custom').value = '';
+    if (fl.isSpec) {
+      fl.style = '精緻'; fl.isSpec = false;
+      let fBtn = e('grp-fl-style').querySelector('.btn');
+      if (fBtn) {
+        e('grp-fl-style').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+        fBtn.classList.add('active');
+      }
+    }
+    updateFlSectionStates();
+    renderColorBtns();
+    renderTissueBtns();
+    renderWrapBtns();
+    renderFlPrices();
+  }
+}
+
+function delPreviewAt(hIdx) {
+  let ent = itemHistory[hIdx];
+  if (!ent) return;
+  itemHistory.splice(hIdx, 1);
+  resetByHist(ent);
+  calcTotal();
+}
+
+function undoLastPreviewItem() {
+  let items = getOrderItems();
+  let s = e('status-msg');
+  if (items.length === 0) {
+    s.style.color = '#e11d48';
+    s.textContent = '⚠️ 目前明細沒有項目可刪除';
+    return;
+  }
+  let last = items[items.length - 1];
+  let ent = itemHistory[last.hIdx];
+  itemHistory.splice(last.hIdx, 1);
+  resetByHist(ent);
+  calcTotal();
+  s.style.color = '#d6304d';
+  s.textContent = '↩️ 已刪除上一個明細：' + last.name + ' ($' + fmt(last.price) + ')';
+}
+
+function updatePreview() {
+  let pay = e('grp-pay').querySelector('.btn.active')?.textContent || '現金';
+  e('prev-pay').textContent = pay + ' ｜ ' + getOp();
+  let items = getOrderItems(), list = e('live-list');
+  if (items.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:60px 0;font-size:13px">尚無選擇任何品項</div>';
+    return;
+  }
+  list.innerHTML = items.map(it =>
+    '<div class="receipt-row"><div><div class="receipt-item-name">' + escH(it.name) + '</div>' +
+    (it.desc ? '<div class="receipt-item-desc">' + escH(it.desc) + '</div>' : '') +
+    '</div><div class="receipt-item-val">$' + fmt(it.price) +
+    '<button type="button" class="item-del-btn" onclick="delPreviewAt(' + it.hIdx + ')" title="刪除此項">✕</button></div></div>'
+  ).join('');
+}
+
+// ──────────────────────────────────────────────
+// 記錄者控制
+// ──────────────────────────────────────────────
+function getOp() {
+  let cust = e('op-custom') ? e('op-custom').value.trim() : '';
+  return cust || curOp || '櫃檯';
+}
+
+function selOpBtn(btn, name) {
+  e('grp-op').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  curOp = name;
+  lastOpBtn = name;
+  if (e('op-custom')) e('op-custom').value = '';
+  try { localStorage.setItem(OP_KEY, name); } catch (err) { }
+  updatePreview();
+}
+
+function onOpCustom() {
+  let cust = e('op-custom').value.trim();
+  if (cust) {
+    e('grp-op').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+    curOp = cust;
+  } else {
+    let btns = e('grp-op').querySelectorAll('.btn');
+    let hit = false;
+    btns.forEach(b => {
+      if (b.textContent.trim() === lastOpBtn) { b.classList.add('active'); hit = true; }
+      else b.classList.remove('active');
+    });
+    if (!hit && btns[0]) btns[0].classList.add('active');
+    curOp = lastOpBtn;
+  }
+  updatePreview();
+}
+
+function initOp() {
+  let sv = "";
+  try { sv = localStorage.getItem(OP_KEY) || ""; } catch (err) { }
+  if (!sv || sv === "櫃檯Mac" || sv === "iPhone" || sv === "iPad") sv = "櫃檯";
+  curOp = sv;
+  lastOpBtn = sv;
+  let btns = e('grp-op').querySelectorAll('.btn');
+  let hit = false;
+  btns.forEach(b => {
+    if (b.textContent.trim() === sv) { b.classList.add('active'); hit = true; }
+    else b.classList.remove('active');
+  });
+  if (!hit && e('op-custom')) e('op-custom').value = sv;
+}
+
+// ──────────────────────────────────────────────
+// 實收現金快選
+// ──────────────────────────────────────────────
+function setExact() {
+  e('m-received').value = parseFloat(e('disp-total').textContent.replace('$', '')) || 0;
+  calcTotal();
+}
+function setCash(n) { e('m-received').value = n; calcTotal(); }
+function clrCash() { e('m-received').value = ''; calcTotal(); }
+
+function copyText(txt) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).catch(() => { fallbackCopy(txt); });
+  } else {
+    fallbackCopy(txt);
+  }
+}
+
+function fallbackCopy(txt) {
+  let ta = document.createElement('textarea');
+  ta.value = txt;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch (err) { }
+  document.body.removeChild(ta);
+}
+
+function loadOrders() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) { return []; } }
+function saveOrder(o) {
+  let a = loadOrders();
+  a.push(o);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(a));
+  updateBadge();
+}
+function updateBadge() {
+  let a = loadOrders();
+  let countEl = e('today-order-count');
+  if (countEl) countEl.textContent = '今日訂單: ' + a.length + ' 筆';
+}
+
+function buildOrderText() {
+  let tot = parseFloat(e('disp-total').textContent.replace('$', '')) || 0;
+  let d = new Date();
+  let dt = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.toLocaleTimeString('zh-TW', { hour12: false });
+  let no = 'WY-' + d.getHours() + d.getMinutes() + d.getSeconds() + Math.floor(Math.random() * 90 + 10);
+  let name = e('c-name').value.trim() || '現場顧客';
+  let phone = e('c-phone').value.trim() || '無';
+  let pay = e('grp-pay').querySelector('.btn.active')?.textContent || '現金';
+  let op = getOp();
+  let rm = e('c-remark').value.trim();
+  let items = getOrderItems().map(it => '• ' + it.name + ' $' + fmt(it.price) + (it.desc ? '\n   ↳ ' + it.desc : '')).join('\n');
+  let mVal = parseFloat(e('m-received').value) || 0;
+  let chg = mVal >= tot ? (mVal - tot) : 0;
+
+  let msg = '【WUYI 門市消費明細】\n----------------------------\n時間：' + dt + '\n單號：' + no + ' (' + op + ')\n顧客：' + name + '\n電話：' + phone + '\n付款：' + pay + '\n----------------------------\n消費項目：\n' + items + '\n----------------------------\n應付總額：$' + fmt(tot) + '\n';
+  if (pay === '現金' && mVal > 0) msg += '實收金額：$' + fmt(mVal) + ' / 找零：$' + fmt(chg) + '\n';
+  if (rm) msg += '備註事項：' + rm + '\n';
+  msg += '----------------------------\n謝謝光臨 WUYI！';
+  return msg;
+}
+
+function sendToLine() {
+  let tot = parseFloat(e('disp-total').textContent.replace('$', '')) || 0;
+  let s = e('status-msg');
+  if (tot === 0) {
+    if (lastOrderMsg) {
+      copyText(lastOrderMsg);
+      s.innerHTML = '<span style="color:#d97706;font-weight:bold">✅ 已重新複製剛才上一筆明細到剪貼簿（未送出）！</span>';
+      return;
+    }
+    alert('請先選擇品項再複製！');
+    return;
+  }
+  let msg = buildOrderText();
+  lastOrderMsg = msg;
+  copyText(msg);
+  s.innerHTML = '<span style="color:#d97706;font-weight:bold">✅ 只複製明細成功（未送出紀錄）！可直接貼至 LINE</span>';
+}
+
+function buildSlipHtml() {
+  let tot = parseFloat(e('disp-total').textContent.replace(/[$,]/g, '')) || 0;
+  let d = new Date();
+  let dt = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.toLocaleTimeString('zh-TW', { hour12: false });
+  let no = 'WY-' + d.getHours() + d.getMinutes() + d.getSeconds() + Math.floor(Math.random() * 90 + 10);
+  let name = escH(e('c-name').value.trim() || '現場顧客');
+  let phone = escH(e('c-phone').value.trim() || '-');
+  let pay = escH(e('grp-pay').querySelector('.btn.active')?.textContent || '現金');
+  let op = escH(getOp());
+  let rm = escH(e('c-remark').value.trim());
+  let rows = getOrderItems().map(it =>
+    '<tr><td style="padding:3px 0"><div style="font-weight:bold">' + escH(it.name) + '</div>' + (it.desc ? '<div style="font-size:10px;color:#555">' + escH(it.desc) + '</div>' : '') + '</td><td style="padding:3px 0;text-align:right;font-weight:bold">$' + fmt(it.price) + '</td></tr>'
+  ).join('');
+  let mVal = parseFloat(e('m-received').value) || 0;
+  let chg = mVal >= tot ? (mVal - tot) : 0;
+
+  return '<div style="text-align:center;border-bottom:1.5px solid #222;padding-bottom:4px;margin-bottom:5px"><h2 style="font-size:16px;font-weight:800;letter-spacing:1px;margin-bottom:2px">WUYI 門市消費收據</h2><div style="font-size:10px;color:#555">專屬花禮 • 甜點選物 ｜ 櫃檯結帳出單</div></div><div style="display:grid;grid-template-columns:1fr 1fr;font-size:10.5px;gap:2px;margin-bottom:5px;border-bottom:1px dashed #999;padding-bottom:4px"><div>單號：<b>' + no + '</b></div><div style="text-align:right">' + dt + '</div><div>顧客：<b>' + name + '</b></div><div style="text-align:right">電話：' + phone + '</div><div>支付：<b>' + pay + '</b></div><div style="text-align:right">記錄者：' + op + '</div></div><table style="width:100%;font-size:11px;border-collapse:collapse;margin-bottom:5px"><thead><tr style="border-bottom:1px solid #000;background:#f5f5f5"><th style="padding:2px 0;text-align:left">項目與規格</th><th style="padding:2px 0;text-align:right;width:55px">金額</th></tr></thead><tbody>' + rows + '</tbody></table><div style="border-top:1.5px solid #000;padding-top:4px;font-size:11px;line-height:1.4"><div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800"><span>應付總計</span><span>$' + fmt(tot) + '</span></div>' + (pay === '現金' && mVal > 0 ? '<div style="display:flex;justify-content:space-between;font-size:10.5px;color:#555"><span>實收現金</span><span>$' + fmt(mVal) + '</span></div><div style="display:flex;justify-content:space-between;font-weight:bold"><span>找零金額</span><span>$' + fmt(chg) + '</span></div>' : '') + '</div>' + (rm ? '<div style="margin-top:4px;padding:3px 5px;background:#f8f9fa;border-left:2px solid var(--f);font-size:10px">備註: ' + rm + '</div>' : '') + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;border-top:1px dashed #aaa;padding-top:4px;font-size:9.5px;color:#555"><div>謝謝光臨！請憑此單對點商品</div><div style="border:1px solid #999;padding:1px 6px;border-radius:3px">門市經手章</div></div>';
+}
+
+function printSlip() {
+  let tot = parseFloat(e('disp-total').textContent.replace(/[$,]/g, '')) || 0;
+  if (tot === 0) {
+    if (lastSlipHtml) {
+      e('print-slip').innerHTML = lastSlipHtml;
+      e('status-msg').innerHTML = '<span style="color:#7a1c3a;font-weight:bold">🖨️ 已為您補印剛才上一筆結帳收據！</span>';
+      window.focus();
+      setTimeout(() => { window.print(); }, 100);
+      return;
+    }
+    alert('請先選擇品項再列印！');
+    return;
+  }
+  let html = buildSlipHtml();
+  lastSlipHtml = html;
+  e('print-slip').innerHTML = html;
+  window.focus();
+  setTimeout(() => { window.print(); }, 100);
+}
+
+// ──────────────────────────────────────────────
+// 結帳送出與寫入 Google 試算表 (完全過濾 EMOJI)
+// ──────────────────────────────────────────────
+async function submitOrder() {
+  if (isSubmitting) return;
+  let tot = parseFloat(e('disp-total').textContent.replace('$', '')) || 0;
+  if (tot === 0) { alert('請先選擇品項或輸入金額再結帳！'); return; }
+
+  let clipTxt = buildOrderText();
+  lastOrderMsg = clipTxt;
+  lastSlipHtml = buildSlipHtml();
+  copyText(clipTxt);
+
+  isSubmitting = true;
+  let sb = e('btn-submit');
+  if (sb) { sb.disabled = true; sb.style.opacity = '0.6'; }
+
+  let d = new Date(), timestamp = d.toLocaleString('zh-TW', { hour12: false });
+  let name = e('c-name').value.trim(), phone = e('c-phone').value.trim(), payment = e('grp-pay').querySelector('.btn.active')?.textContent || '現金', operator = getOp(), remark = e('c-remark').value.trim();
+
+  let flTotal = getFlTotal(),
+      bag = itemVal.bag,
+      burger = getCustom('burger-custom', 'burger'),
+      cake4 = getCustom('cake4-custom', 'cake4'),
+      utensils = getCustom('utensils-custom', 'utensils'),
+      cooler = itemVal.cooler,
+      extra = getExtraSum();
+
+  let flSpecInfo = '';
+  if (flTotal > 0) {
+    let sp = ['款:' + fl.style, '色:' + fl.color];
+    if (fl.hard > 0) sp.push('硬紙(+50)');
+    if (fl.tFee > 0) sp.push('襯:' + fl.tissue);
+    if (fl.wrap !== '無指定' && fl.wrap) sp.push('包:' + fl.wrap);
+    flSpecInfo = '【鮮花:' + sp.join('/') + '】';
+  }
+  let ckInfo = cake4 > 0 ? '【現貨4吋:$' + cake4 + '】' : '';
+  let opInfo = '【記錄:' + operator + '】';
+  let info = [name, phone, opInfo, flSpecInfo, ckInfo, remark].filter(v => v).join(' | ');
+
+  let msg = e('status-msg');
+  msg.style.color = '#2f3542';
+  msg.textContent = '⏳ 傳送至 Google 試算表並複製明細中...';
+
+  try {
+    let spData = new URLSearchParams({
+      timestamp: stripEmoji(timestamp),
+      operator: stripEmoji(operator),
+      payment: stripEmoji(payment),
+      name: stripEmoji(name),
+      customerName: stripEmoji(name),
+      phone: stripEmoji(phone),
+      phone3: stripEmoji(phone),
+      flowerStyle: stripEmoji(flTotal > 0 ? fl.style : '無鮮花'),
+      flowerColor: stripEmoji(flTotal > 0 ? fl.color : ''),
+      color: stripEmoji(flTotal > 0 ? fl.color : ''),
+      flowerTissue: stripEmoji(flTotal > 0 ? fl.tissue : ''),
+      flowerWrap: stripEmoji(flTotal > 0 ? fl.wrap : ''),
+      hardPaperFee: stripEmoji((flTotal > 0 && fl.hard > 0) ? ('是(+$' + fl.hard + ')') : '否'),
+      flowerTotal: flTotal || 0,
+      bag: bag || 0,
+      burger: burger || 0,
+      cake4: cake4 || 0,
+      utensils: utensils || 0,
+      cooler: cooler || 0,
+      coolerBag: cooler || 0,
+      extra: extra || 0,
+      candle: extra || 0,
+      total: tot || 0,
+      remark: stripEmoji(remark),
+      notes: stripEmoji(remark),
+      summary: stripEmojiMultiLine(clipTxt)
+    });
+
+    let p = new URLSearchParams({
+      'entry.254247862': stripEmoji(payment),
+      'entry.776891490': flTotal || '',
+      'entry.126484467': bag || '',
+      'entry.231825051': burger || '',
+      'entry.1603443332': utensils || '',
+      'entry.300424836': cooler || '',
+      'entry.1490075931': extra || '',
+      'entry.2093768064': '',
+      'entry.1488185520': stripEmoji(info)
+    });
+
+    await Promise.allSettled([
+      fetch(SHEET_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: spData.toString() }),
+      fetch(FORM_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: p.toString() })
+    ]);
+  } catch (err) { }
+
+  saveOrder({
+    timestamp, operator, payment, name, phone,
+    flStyle: flTotal > 0 ? fl.style : '無鮮花',
+    flColor: flTotal > 0 ? fl.color : '',
+    flTissue: flTotal > 0 ? fl.tissue : '',
+    flWrap: flTotal > 0 ? fl.wrap : '',
+    hardFee: flTotal > 0 ? fl.hard : 0,
+    flTotal, bag, burger, cake4, utensils, cooler, extra, total: tot, remark
+  });
+
+  resetAll(true);
+  isSubmitting = false;
+  if (sb) { sb.disabled = false; sb.style.opacity = '1'; }
+  msg.style.color = '#2ed573';
+  msg.textContent = '✅ 已寫入 Google 試算表並複製明細到剪貼簿！';
+}
+
+function resetAll(keepStatus) {
+  ['c-name', 'c-phone', 'fl-custom', 'burger-custom', 'cake4-custom', 'utensils-custom', 'extra-custom', 'c-remark', 'm-received', 'color-other-text', 'tissue-other-text', 'wrap-other-text'].forEach(id => {
+    let el = e(id); if (el) el.value = '';
+  });
+  itemVal = { burger: 0, cake4: 0, bag: 0, cooler: 0, utensils: 0 };
+  extraItems = [];
+  itemHistory = [];
+  fl = {
+    style: '精緻',
+    isSpec: false,
+    base: 0,
+    hard: 0,
+    colors: ['無指定'],
+    color: '無指定',
+    tissue: '無襯紙 ($0)',
+    tFee: 0,
+    wrap: '無指定'
+  };
+  e('row-hard').style.display = 'none';
+
+  // 重置款式按鈕到精緻
+  let fBtn = e('grp-fl-style').querySelector('.btn');
+  if (fBtn) {
+    e('grp-fl-style').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+    fBtn.classList.add('active');
+  }
+
+  // 重置甜筒材質到一般
+  rstGrpFirst('grp-hard');
+
+  // 重置付款按鈕到現金
+  let pBtn = e('grp-pay').querySelector('.btn');
+  if (pBtn) {
+    e('grp-pay').querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+    pBtn.classList.add('active');
+  }
+
+  // 重置所有次要群組第一項
+  ['grp-burger', 'grp-bag', 'grp-cooler', 'grp-cake4', 'grp-utensils'].forEach(id => rstGrpFirst(id));
+
+  updateFlSectionStates();
+  renderColorBtns();
+  renderTissueBtns();
+  renderWrapBtns();
+  renderFlPrices();
+  renderExtraBtns();
+  updateBagTag();
+  if (!keepStatus) e('status-msg').textContent = '';
+  calcTotal();
+}
+
+// ──────────────────────────────────────────────
+// 初始化載入
+// ──────────────────────────────────────────────
+initOp();
+updateFlSectionStates();
+renderColorBtns();
+renderTissueBtns();
+renderWrapBtns();
+renderFlPrices();
+renderExtraBtns();
+updateBagTag();
+updateBadge();
+calcTotal();
+</script>
+</body>
+</html>
