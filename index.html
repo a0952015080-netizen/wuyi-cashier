@@ -16,7 +16,7 @@ body{background:var(--bg);color:var(--t);padding:8px}
 
 /* 頂部標題 */
 .header-bar{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:8px 14px;border-radius:9px;border:1.5px solid var(--b);margin-bottom:8px;box-shadow:0 2px 6px rgba(0,0,0,0.03)}
-.header-title-box h1{font-size:17px;font-weight:800;color:#2f3542;letter-spacing:0.5px}
+.header-title-box h1{font-size:19.5px;font-weight:400;color:#2f3542;letter-spacing:0.5px}
 .top-tools{display:flex;align-items:center;gap:6px}
 .order-badge{background:#f1f5f9;color:#334155;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:800;border:1px solid #cbd5e1}
 
@@ -36,7 +36,7 @@ body{background:var(--bg);color:var(--t);padding:8px}
 
 /* 卡片與欄位 */
 .card{background:#fff;border-radius:9px;padding:8px 12px;border:1.5px solid var(--b);box-shadow:0 2px 6px rgba(0,0,0,0.03)}
-.card-header{font-size:12.5px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;color:#1e293b}
+.card-header{font-size:14.5px;font-weight:400;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between;color:#1e293b}
 .btn-group{display:flex;flex-wrap:wrap;gap:4px}
 .btn{flex:1;min-width:40px;padding:5px 4px;font-size:12px;border:1.5px solid var(--b);background:#fff;color:var(--t);border-radius:6px;cursor:pointer;text-align:center;font-weight:600;user-select:none;transition:all 0.15s ease}
 .btn:hover{border-color:var(--p);background:var(--pl)}
@@ -45,7 +45,7 @@ body{background:var(--bg);color:var(--t);padding:8px}
 /* 鮮花專區卡片 */
 .flower-card{background:#faf9ff;border:1.5px solid #dcd6f7}
 .flower-row{margin-bottom:5px}
-.flower-title{font-size:11.5px;font-weight:700;color:var(--f);margin-bottom:3px;display:flex;align-items:center;justify-content:space-between}
+.flower-title{font-size:13.5px;font-weight:400;color:var(--f);margin-bottom:3px;display:flex;align-items:center;justify-content:space-between}
 .tag-free{font-size:9.5px;background:#eccc68;color:#2f3542;padding:1px 5px;border-radius:4px;font-weight:700}
 .tag-fee{font-size:9.5px;background:#ff6b81;color:#fff;padding:1px 5px;border-radius:4px;font-weight:bold}
 .color-badge{font-size:10px;font-weight:700;margin-left:4px;color:#8854d0}
@@ -96,8 +96,8 @@ body{background:var(--bg);color:var(--t);padding:8px}
   box-sizing:border-box;
 }
 .receipt-title{
-  font-size:14px;
-  font-weight:800;
+  font-size:16px;
+  font-weight:400;
   border-bottom:2px solid #f1f5f9;
   padding-bottom:7px;
   margin-bottom:8px;
@@ -181,7 +181,7 @@ body{background:var(--bg);color:var(--t);padding:8px}
   border:1px solid #e2e8f0;
 }
 .calc-stat{display:flex;flex-direction:column;gap:2px}
-.calc-lbl{font-size:11px;font-weight:700;color:#64748b}
+.calc-lbl{font-size:12.5px;font-weight:400;color:#64748b}
 .calc-val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}
 .calc-val.total{color:#0f172a}
 .calc-val.change{color:#059669}
@@ -374,7 +374,7 @@ body{background:var(--bg);color:var(--t);padding:8px}
         <div class="card" style="margin:0">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
             <div>
-              <div class="card-header" style="font-size:11.5px">
+              <div class="card-header" style="font-size:13.5px">
                 <span>🛍️ 提袋($40)</span>
                 <span id="bag-inc-tag" style="display:none;font-size:9.5px;color:#2ed573;font-weight:bold">(含)</span>
               </div>
@@ -385,7 +385,7 @@ body{background:var(--bg);color:var(--t);padding:8px}
               </div>
             </div>
             <div>
-              <div class="card-header" style="font-size:11.5px"><span>🧊 保冰($100)</span></div>
+              <div class="card-header" style="font-size:13.5px"><span>🧊 保冰($100)</span></div>
               <div class="btn-group" id="grp-cooler">
                 <button class="btn active" onclick="selBtn(this,'cooler',0)">無</button>
                 <button class="btn" onclick="selBtn(this,'cooler',100)">+100</button>
@@ -512,6 +512,7 @@ const SHEET_URL = "https://script.google.com/macros/s/AKfycbzl0Scogh2exJdyypZWyw
 const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSe93-zPd6A2paFT8L0MAem_1b7ySOUlju4ElNDw5tJGGhBHfg/formResponse";
 const STORAGE_KEY = "wuyi_orders";
 const OP_KEY = "wuyi_operator";
+const KEEP_DAYS = 31; // 本機訂單紀錄保留天數（超過自動清除，避免儲存空間爆滿）
 
 let isSubmitting = false;
 let lastOrderMsg = "";
@@ -1528,18 +1529,72 @@ function fallbackCopy(txt) {
   document.body.removeChild(ta);
 }
 
-function loadOrders() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch (e) { return []; } }
+// ──────────────────────────────────────────────
+// 今日訂單計數（防呆：依「本機日期」每日自動重新計算）
+// ──────────────────────────────────────────────
+function dayKey(d) {
+  d = d || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// 取得訂單所屬日期：新訂單有 day 欄位；舊訂單從 timestamp (例 2026/10/31 11:38:37) 解析
+function orderDay(o) {
+  if (!o) return '';
+  if (o.day) return o.day;
+  let m = String(o.timestamp || '').match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+  return m ? (m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0')) : '';
+}
+
+function loadOrders() {
+  try {
+    let a = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    return Array.isArray(a) ? a : [];
+  } catch (err) { return []; }
+}
+
+// 清除超過保留天數的舊紀錄
+function pruneOrders(a) {
+  let cut = new Date();
+  cut.setDate(cut.getDate() - KEEP_DAYS);
+  let cutKey = dayKey(cut);
+  return a.filter(o => { let k = orderDay(o); return k && k >= cutKey; });
+}
+
+function loadTodayOrders() {
+  let today = dayKey();
+  return loadOrders().filter(o => orderDay(o) === today);
+}
+
 function saveOrder(o) {
-  let a = loadOrders();
+  o.day = dayKey();
+  let a = pruneOrders(loadOrders());
   a.push(o);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(a));
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(a)); } catch (err) { }
   updateBadge();
 }
+
+let badgeDay = '';
 function updateBadge() {
-  let a = loadOrders();
+  let today = dayKey();
+  // 跨日時順便清理舊資料
+  if (badgeDay && badgeDay !== today) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pruneOrders(loadOrders()))); } catch (err) { }
+  }
+  badgeDay = today;
+  let n = loadTodayOrders().length;
+  let d = new Date();
   let countEl = e('today-order-count');
-  if (countEl) countEl.textContent = '今日訂單: ' + a.length + ' 筆';
+  if (countEl) {
+    countEl.textContent = '今日訂單 (' + (d.getMonth() + 1) + '/' + d.getDate() + '): ' + n + ' 筆';
+    countEl.title = '每日 00:00 自動歸零重新計算';
+  }
 }
+
+// 頁面整天開著也會在跨日後自動歸零；切回分頁時立即重新檢查
+setInterval(() => { if (dayKey() !== badgeDay) updateBadge(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) updateBadge(); });
+window.addEventListener('focus', updateBadge);
+window.addEventListener('storage', ev => { if (ev.key === STORAGE_KEY) updateBadge(); });
 
 function buildOrderText() {
   let tot = parseFloat(e('disp-total').textContent.replace('$', '')) || 0;
