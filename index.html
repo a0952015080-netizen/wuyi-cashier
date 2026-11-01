@@ -248,6 +248,7 @@ body{background:var(--bg);color:var(--t);padding:8px}
   .pos-grid{grid-template-columns:1fr}
   .sidebar{position:static;height:auto}
   .receipt-items{min-height:180px}
+  .top-cust-row{grid-template-columns:1fr 1fr!important;row-gap:6px}
 }
 </style>
 </head>
@@ -271,11 +272,9 @@ body{background:var(--bg);color:var(--t);padding:8px}
 
       <!-- 1. 顧客資訊與記錄者 -->
       <div class="card" style="margin-bottom:0">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+        <div class="top-cust-row" style="display:grid;grid-template-columns:1fr 1fr 1.1fr 1.25fr;gap:6px;align-items:center">
           <input type="text" class="input" id="c-name" placeholder="顧客姓名 (可選)">
           <input type="tel" class="input" id="c-phone" placeholder="電話後三碼/電話 (可選)">
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1.15fr;gap:6px;align-items:center">
           <div class="btn-group" id="grp-pay">
             <button class="btn active" onclick="selBtn(this,'pay',0)">現金</button>
             <button class="btn" onclick="selBtn(this,'pay',0)">Line Pay</button>
@@ -493,10 +492,13 @@ body{background:var(--bg);color:var(--t);padding:8px}
         <div style="margin-bottom:8px">
           <input type="number" class="input" id="m-received" placeholder="實收金額 (點按快選)" oninput="calcTotal()" style="font-size:16px;font-weight:800;text-align:center;padding:6px;height:38px">
           <div class="quick-cash">
-            <button class="quick-btn" onclick="setExact()">剛好</button>
-            <button class="quick-btn" onclick="setCash(500)">500</button>
-            <button class="quick-btn" onclick="setCash(1000)">1000</button>
-            <button class="quick-btn" onclick="clrCash()">清除</button>
+            <button type="button" class="quick-btn" onclick="setCash(500)">500</button>
+            <button type="button" class="quick-btn" onclick="setCash(1000)">1000</button>
+            <button type="button" class="quick-btn" onclick="setCash(1500)">1500</button>
+            <button type="button" class="quick-btn" onclick="setCash(2000)">2000</button>
+            <button type="button" class="quick-btn" onclick="setCash(2500)">2500</button>
+            <button type="button" class="quick-btn" onclick="setCash(3000)">3000</button>
+            <button type="button" class="quick-btn" style="flex:0.7;color:#e11d48" onclick="clrCash()">清除</button>
           </div>
         </div>
 
@@ -1393,7 +1395,13 @@ function getOrderItems() {
         if (fl.hard > 0) sp.push('硬紙(+50)');
         if (fl.tFee > 0) sp.push('襯紙:' + fl.tissue);
         if (fl.wrap !== '無指定' && fl.wrap) sp.push('包裝:' + fl.wrap);
-        items.push({ hIdx: idx, name: '鮮花 - ' + fl.style, desc: sp.join(' / '), price: flT });
+
+        let displayName = '鮮花 - ' + fl.style;
+        if (fl.base > 0) {
+          displayName += ' $' + fl.base;
+        }
+
+        items.push({ hIdx: idx, name: displayName, desc: sp.join(' / '), price: flT, isFlower: true });
       }
     } else if (h.kind === 'burger') {
       let v = getCustom('burger-custom', 'burger'); if (v > 0) items.push({ hIdx: idx, name: '漢堡盒', desc: '', price: v });
@@ -1650,7 +1658,10 @@ function buildOrderText() {
   let pay = e('grp-pay').querySelector('.btn.active')?.textContent || '現金';
   let op = getOp();
   let rm = e('c-remark').value.trim();
-  let items = getOrderItems().map(it => '• ' + it.name + ' $' + fmt(it.price) + (it.desc ? '\n   ↳ ' + it.desc : '')).join('\n');
+  let items = getOrderItems().map(it => {
+    let prTxt = it.isFlower ? '' : (' $' + fmt(it.price));
+    return '• ' + it.name + prTxt + (it.desc ? '\n   ↳ ' + it.desc : '');
+  }).join('\n');
   let mVal = parseFloat(e('m-received').value) || 0;
   let chg = mVal >= tot ? (mVal - tot) : 0;
 
@@ -1779,7 +1790,8 @@ function openMgrListModal() {
         if (o.flColor) sp.push(o.flColor);
         if (o.flTissue) sp.push(o.flTissue);
         if (o.flWrap) sp.push(o.flWrap);
-        itemsSummary.push('鮮花(' + (o.flStyle || '') + (sp.length ? '·' + sp.join('/') : '') + ') $' + fmt(o.flTotal));
+        let basePart = (o.flBase && o.flBase > 0) ? (' $' + o.flBase) : '';
+        itemsSummary.push('鮮花(' + (o.flStyle || '') + basePart + (sp.length ? '·' + sp.join('/') : '') + ') $' + fmt(o.flTotal));
       }
       if (o.burger > 0) itemsSummary.push('漢堡盒 $' + fmt(o.burger));
       if (o.cake4 > 0) itemsSummary.push('4吋現貨 $' + fmt(o.cake4));
@@ -2033,6 +2045,7 @@ async function submitOrder() {
   saveOrder({
     timestamp, operator, payment, name, phone,
     flStyle: flTotal > 0 ? fl.style : '無鮮花',
+    flBase: flTotal > 0 ? fl.base : 0,
     flColor: flTotal > 0 ? fl.color : '',
     flTissue: flTotal > 0 ? fl.tissue : '',
     flWrap: flTotal > 0 ? fl.wrap : '',
