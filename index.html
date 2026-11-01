@@ -333,9 +333,6 @@ body{background:var(--bg);color:var(--t);padding:8px}
             <span class="tag-free">免費</span>
           </div>
           <div class="btn-group" id="grp-fl-color"></div>
-          <div class="other-input-box" id="box-color-other">
-            <input type="text" class="input" id="color-other-text" placeholder="✏️ 請填寫其他色系 (例: 奶茶、香檳、霧灰...)" oninput="onColorOtherInput()">
-          </div>
         </div>
 
         <!-- ③ 襯紙選項 -->
@@ -375,22 +372,11 @@ body{background:var(--bg);color:var(--t);padding:8px}
         </div>
       </div>
 
-      <!-- 3. 漢堡盒 / 提袋保冰袋 -->
-      <div class="r2c" style="display:grid;grid-template-columns:1.2fr 1fr;gap:6px;margin-bottom:0">
+      <!-- 3. 左下六個欄位 (左右兩欄 1:1 等長，各分配 3 個相同長度的欄位) -->
+      <!-- 第一列：🛍️ 提袋($40)🧊 保冰($100) ｜ 🍴 餐具加購 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:0">
         <div class="card" style="margin:0">
-          <div class="card-header"><span>🍔 漢堡盒價格</span></div>
-          <div style="display:flex;gap:4px">
-            <div class="btn-group" id="grp-burger" style="flex:2.2">
-              <button class="btn active" onclick="selBtn(this,'burger',0)">無</button>
-              <button class="btn" onclick="selBtn(this,'burger',680)">680</button>
-              <button class="btn" onclick="selBtn(this,'burger',700)">700</button>
-              <button class="btn" onclick="selBtn(this,'burger',720)">720</button>
-            </div>
-            <input type="number" min="0" class="input" id="burger-custom" placeholder="自訂" oninput="onCustomGrp('burger')" style="flex:1">
-          </div>
-        </div>
-        <div class="card" style="margin:0">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
             <div>
               <div class="card-header" style="font-size:13.5px">
                 <span>🛍️ 提袋($40)</span>
@@ -412,22 +398,6 @@ body{background:var(--bg);color:var(--t);padding:8px}
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- 4. 現貨4吋加單 + 餐具加購 -->
-      <div class="r2c" style="display:grid;grid-template-columns:1.35fr 1fr;gap:6px;margin-bottom:0">
-        <div class="card" style="margin:0">
-          <div class="card-header"><span>🎂 現貨4吋加單</span></div>
-          <div style="display:flex;gap:4px">
-            <div class="btn-group" id="grp-cake4" style="flex:2.6">
-              <button class="btn active" onclick="selBtn(this,'cake4',0)">無</button>
-              <button class="btn" onclick="selBtn(this,'cake4',1000)">1000</button>
-              <button class="btn" onclick="selBtn(this,'cake4',1060)">1060</button>
-              <button class="btn" onclick="selBtn(this,'cake4',1080)">1080</button>
-            </div>
-            <input type="number" min="0" class="input" id="cake4-custom" placeholder="自訂" oninput="onCustomGrp('cake4')" style="flex:1">
-          </div>
-        </div>
         <div class="card" style="margin:0">
           <div class="card-header"><span>🍴 餐具加購</span></div>
           <div style="display:flex;gap:4px">
@@ -442,28 +412,50 @@ body{background:var(--bg);color:var(--t);padding:8px}
         </div>
       </div>
 
-      <!-- 5. 其他加購（蠟燭/道具，支援複選累加） + 客製化備註 -->
-      <div class="r2c" style="display:grid;grid-template-columns:1.5fr 0.85fr;gap:6px;margin-bottom:0">
+      <!-- 第二列：🕯️ 其他加購（蠟燭/道具） ｜ 🍔 漢堡盒價格 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:0">
         <div class="card" style="margin:0">
           <div class="card-header">
             <span>🕯️ 其他加購（蠟燭/道具）<span class="tag-free" style="background:#2ed573;color:#fff;margin-left:3px">可複選累加</span></span>
             <span style="font-size:10px;color:#747d8c;font-weight:normal">按一次加一筆</span>
           </div>
-          <div style="display:flex;gap:4px;align-items:center">
-            <div class="btn-group" id="grp-extra" style="flex:3.3">
-              <button class="btn active" id="extra-btn-0" onclick="clrExtra()">無</button>
-              <button class="btn" data-extra="45" onclick="addExtra(45)">45</button>
-              <button class="btn" data-extra="55" onclick="addExtra(55)">55</button>
-              <button class="btn" data-extra="89" onclick="addExtra(89)">89</button>
-              <button class="btn" data-extra="99" onclick="addExtra(99)">99</button>
+          <div style="display:flex;gap:3px;align-items:center">
+            <div class="btn-group" id="grp-extra" style="flex:1;gap:3px">
+              <button class="btn active" id="extra-btn-0" style="padding:5px 2px;min-width:28px" onclick="clrExtra()">無</button>
+              <button class="btn" data-extra="45" style="padding:5px 2px;min-width:28px" onclick="addExtra(45)">45</button>
+              <button class="btn" data-extra="55" style="padding:5px 2px;min-width:28px" onclick="addExtra(55)">55</button>
+              <button class="btn" data-extra="69" style="padding:5px 2px;min-width:28px" onclick="addExtra(69)">69</button>
+              <button class="btn" data-extra="79" style="padding:5px 2px;min-width:28px" onclick="addExtra(79)">79</button>
+              <button class="btn" data-extra="89" style="padding:5px 2px;min-width:28px" onclick="addExtra(89)">89</button>
+              <button class="btn" data-extra="99" style="padding:5px 2px;min-width:28px" onclick="addExtra(99)">99</button>
             </div>
-            <input type="number" min="0" class="input" id="extra-custom" placeholder="自訂" oninput="onExCustom()" onkeydown="if(event.key==='Enter'){event.preventDefault();commitExCustom();}" style="flex:0.9">
-            <button type="button" class="btn" onclick="commitExCustom()" title="將自訂金額加入明細" style="flex:0 0 28px;min-width:28px;padding:5px 2px;background:#f1f2f6">＋</button>
+            <input type="number" min="0" class="input" id="extra-custom" placeholder="自訂" oninput="onExCustom()" onkeydown="if(event.key==='Enter'){event.preventDefault();commitExCustom();}" style="width:48px;flex:0 0 48px;padding:4px">
+            <button type="button" class="btn" onclick="commitExCustom()" title="將自訂金額加入明細" style="flex:0 0 24px;min-width:24px;padding:5px 1px;background:#f1f2f6">＋</button>
           </div>
         </div>
         <div class="card" style="margin:0">
+          <div class="card-header"><span>🍔 漢堡盒價格</span></div>
+          <div style="display:flex;gap:4px">
+            <div class="btn-group" id="grp-burger" style="flex:2.2">
+              <button class="btn active" onclick="selBtn(this,'burger',0)">無</button>
+              <button class="btn" onclick="selBtn(this,'burger',680)">680</button>
+              <button class="btn" onclick="selBtn(this,'burger',700)">700</button>
+              <button class="btn" onclick="selBtn(this,'burger',720)">720</button>
+            </div>
+            <input type="number" min="0" class="input" id="burger-custom" placeholder="自訂" oninput="onCustomGrp('burger')" style="flex:1">
+          </div>
+        </div>
+      </div>
+
+      <!-- 第三列：📝 客製化備註 ｜ 🎂 現貨4吋加單 (只留自訂欄位) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:0">
+        <div class="card" style="margin:0">
           <div class="card-header"><span>📝 客製化備註</span></div>
           <input type="text" class="input" id="c-remark" placeholder="備註 / 卡片內容..." oninput="updatePreview()">
+        </div>
+        <div class="card" style="margin:0">
+          <div class="card-header"><span>🎂 現貨4吋加單</span></div>
+          <input type="number" min="0" class="input" id="cake4-custom" placeholder="自訂金額 (例: 1000)" oninput="onCustomGrp('cake4')">
         </div>
       </div>
 
@@ -668,7 +660,7 @@ function updateBagTag() {
 // ──────────────────────────────────────────────
 // 色系按鈕定義與動態渲染 (所有款式色系選擇選項跟精緻一樣，最多選3種)
 // ──────────────────────────────────────────────
-const ALL_COLORS = [
+const FLOWER_COLORS = [
   { c: 'none', n: '無指定' },
   { c: 'white', n: '白' },
   { c: 'green', n: '綠' },
@@ -678,8 +670,7 @@ const ALL_COLORS = [
   { c: 'purple', n: '紫' },
   { c: 'orange', n: '橘' },
   { c: 'black', n: '黑' },
-  { c: 'rice', n: '米' },
-  { c: 'other', n: '其他' }
+  { c: 'rice', n: '米' }
 ];
 
 function updateColorBadge() {
@@ -698,27 +689,23 @@ function updateColorBadge() {
 
 function renderColorBtns() {
   let grp = e('grp-fl-color');
-  let boxOther = e('box-color-other');
   if (!grp) return;
 
   if (fl.style === '無鮮花') {
     fl.colors = ['無鮮花'];
     fl.color = '無鮮花';
-    if (boxOther) boxOther.style.display = 'none';
     grp.innerHTML = '<button type="button" class="btn color-btn c-none active">不適用</button>';
     updateColorBadge();
     return;
   }
 
-  // 精緻、點點包裝、條紋、甜筒、透包：色系選擇選項均相同，最多選3種
-  let hasOther = fl.colors.some(c => c.startsWith('其他'));
-  if (boxOther) boxOther.style.display = hasOther ? 'block' : 'none';
+  // 精緻、點點包裝、條紋、甜筒、透包：色系選擇選項均相同，最多選3種 (白、綠、藍、粉、黃、紫、橘、黑、米)
+  fl.colors = fl.colors.filter(c => FLOWER_COLORS.some(x => x.n === c));
+  if (fl.colors.length === 0) fl.colors = ['無指定'];
+  fl.color = fl.colors.join('+');
 
-  grp.innerHTML = ALL_COLORS.map(x => {
-    let isAct = false;
-    if (x.n === '無指定') isAct = fl.colors.includes('無指定');
-    else if (x.n === '其他') isAct = hasOther;
-    else isAct = fl.colors.includes(x.n);
+  grp.innerHTML = FLOWER_COLORS.map(x => {
+    let isAct = (x.n === '無指定') ? fl.colors.includes('無指定') : fl.colors.includes(x.n);
     return '<button type="button" class="btn color-btn c-' + x.c + (isAct ? ' active' : '') + '" data-cname="' + x.n + '" onclick="selColorMulti(this,\'' + x.n + '\')">' + x.n + '</button>';
   }).join('');
   updateColorBadge();
@@ -728,14 +715,11 @@ function selColorMulti(btn, val) {
   if (fl.style === '無鮮花') return;
 
   let grp = e('grp-fl-color');
-  let boxOther = e('box-color-other');
 
   if (val === '無指定') {
     grp.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     fl.colors = ['無指定'];
-    if (boxOther) boxOther.style.display = 'none';
-    if (e('color-other-text')) e('color-other-text').value = '';
   } else {
     let noneBtn = grp.querySelector('.c-none');
     if (noneBtn) noneBtn.classList.remove('active');
@@ -750,47 +734,21 @@ function selColorMulti(btn, val) {
         return;
       }
       btn.classList.add('active');
-      if (val === '其他') {
-        if (boxOther) {
-          boxOther.style.display = 'block';
-          let inp = e('color-other-text');
-          if (inp) inp.focus();
-        }
-      }
     } else {
       btn.classList.remove('active');
-      if (val === '其他') {
-        if (boxOther) boxOther.style.display = 'none';
-        if (e('color-other-text')) e('color-other-text').value = '';
-      }
     }
 
     let act = Array.from(grp.querySelectorAll('.btn.active')).filter(b => b.getAttribute('data-cname') !== '無指定');
     if (act.length === 0) {
       if (noneBtn) noneBtn.classList.add('active');
       fl.colors = ['無指定'];
-      if (boxOther) boxOther.style.display = 'none';
     } else {
-      fl.colors = act.map(b => {
-        let cn = b.getAttribute('data-cname') || b.textContent.trim();
-        if (cn === '其他') {
-          let oVal = e('color-other-text') ? e('color-other-text').value.trim() : '';
-          return oVal ? ('其他:' + oVal) : '其他';
-        }
-        return cn;
-      });
+      fl.colors = act.map(b => b.getAttribute('data-cname') || b.textContent.trim());
     }
   }
 
   fl.color = fl.colors.join('+');
   updateColorBadge();
-  updatePreview();
-}
-
-function onColorOtherInput() {
-  let oVal = e('color-other-text') ? e('color-other-text').value.trim() : '';
-  fl.colors = fl.colors.map(c => c.startsWith('其他') ? (oVal ? ('其他:' + oVal) : '其他') : c);
-  fl.color = fl.colors.join('+');
   updatePreview();
 }
 
@@ -956,6 +914,20 @@ function onTissueOtherInput() {
 // 4. 甜筒 S M L 一般: 單選 紫、黃、粉、小花
 // 5. 甜筒 S M L 硬紙: 單選 藍、黃、粉、綠
 // ──────────────────────────────────────────────
+const WRAP_ALL_COLORS = [
+  { c: 'none', n: '無指定' },
+  { c: 'white', n: '白' },
+  { c: 'green', n: '綠' },
+  { c: 'blue', n: '藍' },
+  { c: 'pink', n: '粉' },
+  { c: 'yellow', n: '黃' },
+  { c: 'purple', n: '紫' },
+  { c: 'orange', n: '橘' },
+  { c: 'black', n: '黑' },
+  { c: 'rice', n: '米' },
+  { c: 'other', n: '其他' }
+];
+
 const STRIPE_WRAP_COLORS = [
   { c: 'blue', n: '藍' },
   { c: 'yellow', n: '黃' },
@@ -1038,7 +1010,7 @@ function renderWrapBtns() {
   let hasOther = fl.wrap.startsWith('其他');
   if (boxOther) boxOther.style.display = hasOther ? 'block' : 'none';
 
-  grp.innerHTML = ALL_COLORS.map(x => {
+  grp.innerHTML = WRAP_ALL_COLORS.map(x => {
     let isAct = (x.n === '其他' && hasOther) || (fl.wrap === x.n);
     return '<button type="button" class="btn color-btn c-' + x.c + (isAct ? ' active' : '') + '" onclick="selWrap(\'' + x.n + '\')">' + x.n + '</button>';
   }).join('');
@@ -1325,7 +1297,7 @@ function clrExtra() {
 }
 
 function renderExtraBtns() {
-  [45, 55, 89, 99].forEach(p => {
+  [45, 55, 69, 79, 89, 99].forEach(p => {
     let btn = document.querySelector('#grp-extra [data-extra="' + p + '"]');
     if (!btn) return;
     let cnt = extraItems.filter(it => it.price === p).length;
@@ -2078,7 +2050,7 @@ async function submitOrder() {
 }
 
 function resetAll(keepStatus) {
-  ['c-name', 'c-phone', 'fl-custom', 'burger-custom', 'cake4-custom', 'utensils-custom', 'extra-custom', 'c-remark', 'm-received', 'color-other-text', 'tissue-other-text', 'wrap-other-text'].forEach(id => {
+  ['c-name', 'c-phone', 'fl-custom', 'burger-custom', 'cake4-custom', 'utensils-custom', 'extra-custom', 'c-remark', 'm-received', 'tissue-other-text', 'wrap-other-text'].forEach(id => {
     let el = e(id); if (el) el.value = '';
   });
   itemVal = { burger: 0, cake4: 0, bag: 0, cooler: 0, utensils: 0 };
@@ -2115,7 +2087,7 @@ function resetAll(keepStatus) {
   }
 
   // 重置所有次要群組第一項
-  ['grp-burger', 'grp-bag', 'grp-cooler', 'grp-cake4', 'grp-utensils'].forEach(id => rstGrpFirst(id));
+  ['grp-burger', 'grp-bag', 'grp-cooler', 'grp-utensils'].forEach(id => rstGrpFirst(id));
 
   updateFlSectionStates();
   renderColorBtns();
