@@ -19,6 +19,23 @@ body{background:var(--bg);color:var(--t);padding:8px}
 .header-title-box h1{font-size:19.5px;font-weight:400;color:#2f3542;letter-spacing:0.5px}
 .top-tools{display:flex;align-items:center;gap:6px}
 .order-badge{background:#f1f5f9;color:#334155;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:800;border:1px solid #cbd5e1}
+.btn-last-order{padding:4px 9px;font-size:12px;font-weight:700;background:#fff;color:#2f3542;border:1.5px solid #cbd5e1;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:3px;transition:all 0.15s;user-select:none}
+.btn-last-order:hover{background:#f1f5f9;border-color:#94a3b8}
+
+/* 彈窗樣式 (上一單明細 & 店長模式) */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center;padding:12px}
+.modal-overlay.active{display:flex}
+.modal-dialog{background:#fff;width:100%;max-width:580px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.2);display:flex;flex-direction:column;max-height:90vh;animation:modalIn 0.18s ease-out;overflow:hidden}
+@keyframes modalIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1.5px solid #e2e8f0;background:#f8fafc}
+.modal-title{font-size:15px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:6px}
+.modal-close{background:none;border:none;font-size:18px;color:#64748b;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px}
+.modal-close:hover{color:#0f172a;background:#e2e8f0}
+.modal-body{padding:14px 16px;overflow-y:auto;flex:1}
+.modal-ftr{padding:10px 16px;border-top:1.5px solid #e2e8f0;background:#f8fafc;display:flex;justify-content:flex-end;gap:8px}
+
+.secret-trigger{cursor:pointer;user-select:none;display:inline-block;transition:transform 0.1s}
+.secret-trigger:active{transform:scale(0.9)}
 
 /* 主版面 Grid 配置：桌面版高度完全拉齊一致，響應式自動適應手機 */
 .pos-grid{
@@ -244,6 +261,7 @@ body{background:var(--bg);color:var(--t);padding:8px}
     </div>
     <div class="top-tools">
       <span class="order-badge" id="today-order-count">今日訂單: 0 筆</span>
+      <button type="button" class="btn-last-order" onclick="showLastOrderModal()">📋 顯示上一單明細</button>
     </div>
   </div>
 
@@ -455,7 +473,7 @@ body{background:var(--bg);color:var(--t);padding:8px}
     <div class="sidebar">
       <div class="receipt-card">
         <div class="receipt-title">
-          <span>🧾 明細預覽</span>
+          <span><span class="secret-trigger" id="receipt-secret-icon" onclick="onSecretIconClick()" title="">🧾</span> 明細預覽</span>
           <div style="display:flex;align-items:center;gap:4px">
             <button type="button" class="btn-undo-item" onclick="undoLastPreviewItem()" title="刪除最後加入的一個明細項目">↩️ 刪除上一個明細</button>
             <span id="prev-pay" style="font-size:11px;background:#e2e8f0;padding:2px 7px;border-radius:4px;font-weight:700">現金</span>
@@ -506,6 +524,60 @@ body{background:var(--bg);color:var(--t);padding:8px}
 </div>
 
 <div id="print-slip"></div>
+
+<!-- 彈窗 1：上一單明細 -->
+<div class="modal-overlay" id="modal-last-order" onclick="if(event.target===this)closeLastOrderModal()">
+  <div class="modal-dialog">
+    <div class="modal-hdr">
+      <div class="modal-title"><span>📋 上一單明細</span></div>
+      <button type="button" class="modal-close" onclick="closeLastOrderModal()">✕</button>
+    </div>
+    <div class="modal-body" id="last-order-content">
+      <!-- 動態填入 -->
+    </div>
+    <div class="modal-ftr">
+      <button type="button" class="btn-sec" onclick="copyLastOrderFromModal()">📋 複製此單明細</button>
+      <button type="button" class="btn-sec" onclick="printLastOrderFromModal()">🖨️ 補印此單收據</button>
+      <button type="button" class="btn" style="background:#0f172a;color:#fff;border-color:#0f172a" onclick="closeLastOrderModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 彈窗 2：店長模式密碼輸入 -->
+<div class="modal-overlay" id="modal-mgr-auth" onclick="if(event.target===this)closeMgrAuthModal()">
+  <div class="modal-dialog" style="max-width:360px">
+    <div class="modal-hdr">
+      <div class="modal-title"><span>🔒 系統驗證</span></div>
+      <button type="button" class="modal-close" onclick="closeMgrAuthModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12.5px;color:#475569;margin-bottom:8px">請輸入密碼：</div>
+      <input type="password" class="input" id="mgr-pwd-input" placeholder="請輸入密碼" style="text-align:center;font-size:16px;letter-spacing:4px" onkeydown="if(event.key==='Enter')verifyMgrPwd()">
+      <div id="mgr-auth-err" style="color:#ef4444;font-size:11.5px;margin-top:6px;min-height:16px;text-align:center;font-weight:700"></div>
+    </div>
+    <div class="modal-ftr">
+      <button type="button" class="btn-sec" onclick="closeMgrAuthModal()">取消</button>
+      <button type="button" class="btn" style="background:var(--ac);color:#fff;border-color:var(--ac)" onclick="verifyMgrPwd()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- 彈窗 3：店長模式 - 今日明細清單 -->
+<div class="modal-overlay" id="modal-mgr-list" onclick="if(event.target===this)closeMgrListModal()">
+  <div class="modal-dialog" style="max-width:720px">
+    <div class="modal-hdr">
+      <div class="modal-title"><span>👑 店長模式 • 今日明細清單</span></div>
+      <button type="button" class="modal-close" onclick="closeMgrListModal()">✕</button>
+    </div>
+    <div class="modal-body" id="mgr-list-content">
+      <!-- 動態填入 -->
+    </div>
+    <div class="modal-ftr">
+      <button type="button" class="btn-sec" onclick="exportTodayOrdersText()">📋 複製今日彙總</button>
+      <button type="button" class="btn" style="background:#0f172a;color:#fff;border-color:#0f172a" onclick="closeMgrListModal()">關閉</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbzl0Scogh2exJdyypZWywoA5gUhdEYexfRPURBxAaA7USOB-kUkv9vLUee_6fPBG6SjiA/exec";
@@ -1654,11 +1726,230 @@ function buildSlipHtml() {
   return '<div style="text-align:center;border-bottom:1.5px solid #222;padding-bottom:4px;margin-bottom:5px"><h2 style="font-size:16px;font-weight:800;letter-spacing:1px;margin-bottom:2px">WUYI 門市消費收據</h2><div style="font-size:10px;color:#555">專屬花禮 • 甜點選物 ｜ 櫃檯結帳出單</div></div><div style="display:grid;grid-template-columns:1fr 1fr;font-size:10.5px;gap:2px;margin-bottom:5px;border-bottom:1px dashed #999;padding-bottom:4px"><div>單號：<b>' + no + '</b></div><div style="text-align:right">' + dt + '</div><div>顧客：<b>' + name + '</b></div><div style="text-align:right">電話：' + phone + '</div><div>支付：<b>' + pay + '</b></div><div style="text-align:right">記錄者：' + op + '</div></div><table style="width:100%;font-size:11px;border-collapse:collapse;margin-bottom:5px"><thead><tr style="border-bottom:1px solid #000;background:#f5f5f5"><th style="padding:2px 0;text-align:left">項目與規格</th><th style="padding:2px 0;text-align:right;width:55px">金額</th></tr></thead><tbody>' + rows + '</tbody></table><div style="border-top:1.5px solid #000;padding-top:4px;font-size:11px;line-height:1.4"><div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800"><span>應付總計</span><span>$' + fmt(tot) + '</span></div>' + (pay === '現金' && mVal > 0 ? '<div style="display:flex;justify-content:space-between;font-size:10.5px;color:#555"><span>實收現金</span><span>$' + fmt(mVal) + '</span></div><div style="display:flex;justify-content:space-between;font-weight:bold"><span>找零金額</span><span>$' + fmt(chg) + '</span></div>' : '') + '</div>' + (rm ? '<div style="margin-top:4px;padding:3px 5px;background:#f8f9fa;border-left:2px solid var(--f);font-size:10px">備註: ' + rm + '</div>' : '') + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;border-top:1px dashed #aaa;padding-top:4px;font-size:9.5px;color:#555"><div>謝謝光臨！請憑此單對點商品</div><div style="border:1px solid #999;padding:1px 6px;border-radius:3px">門市經手章</div></div>';
 }
 
+// ──────────────────────────────────────────────
+// 上一單明細彈窗 & 店長模式 (密碼 5151)
+// ──────────────────────────────────────────────
+let secretClickCount = 0;
+let secretClickTimer = null;
+
+function onSecretIconClick() {
+  secretClickCount++;
+  if (secretClickTimer) clearTimeout(secretClickTimer);
+  secretClickTimer = setTimeout(() => { secretClickCount = 0; }, 1200);
+
+  if (secretClickCount >= 3) {
+    secretClickCount = 0;
+    clearTimeout(secretClickTimer);
+    openMgrAuthModal();
+  }
+}
+
+function openMgrAuthModal() {
+  let modal = e('modal-mgr-auth');
+  let inp = e('mgr-pwd-input');
+  let err = e('mgr-auth-err');
+  if (err) err.textContent = '';
+  if (inp) inp.value = '';
+  if (modal) modal.classList.add('active');
+  setTimeout(() => { if (inp) inp.focus(); }, 100);
+}
+
+function closeMgrAuthModal() {
+  let modal = e('modal-mgr-auth');
+  if (modal) modal.classList.remove('active');
+}
+
+function verifyMgrPwd() {
+  let inp = e('mgr-pwd-input');
+  let err = e('mgr-auth-err');
+  let pwd = inp ? inp.value.trim() : '';
+  if (pwd === '5151') {
+    closeMgrAuthModal();
+    openMgrListModal();
+  } else {
+    if (err) err.textContent = '密碼錯誤，請重新輸入';
+    if (inp) { inp.value = ''; inp.focus(); }
+  }
+}
+
+function openMgrListModal() {
+  let modal = e('modal-mgr-list');
+  let cnt = e('mgr-list-content');
+  let orders = loadTodayOrders();
+  let d = new Date();
+  let dateStr = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+
+  let totalRevenue = orders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+  let cashTotal = orders.filter(o => o.payment === '現金').reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+  let linePayTotal = orders.filter(o => o.payment === 'Line Pay').reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+  let transferTotal = orders.filter(o => o.payment === '轉帳').reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+
+  let html = '';
+  html += '<div style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:12.5px">';
+  html += '<div><b>📅 日期：</b>' + dateStr + '</div>';
+  html += '<div><b>總筆數：</b>' + orders.length + ' 筆</div>';
+  html += '<div><b>總金額：</b><span style="font-size:15px;font-weight:800;color:#0f172a">$' + fmt(totalRevenue) + '</span></div>';
+  html += '<div style="flex-basis:100%;display:flex;gap:12px;color:#475569;font-size:11.5px;padding-top:4px;border-top:1px dashed #cbd5e1">';
+  html += '<span>現金: $' + fmt(cashTotal) + '</span>';
+  html += '<span>Line Pay: $' + fmt(linePayTotal) + '</span>';
+  html += '<span>轉帳: $' + fmt(transferTotal) + '</span>';
+  html += '</div></div>';
+
+  if (orders.length === 0) {
+    html += '<div style="text-align:center;color:#94a3b8;padding:40px 0;font-size:13px">今日尚無結帳訂單紀錄</div>';
+  } else {
+    html += '<div style="display:flex;flex-direction:column;gap:8px">';
+    orders.slice().reverse().forEach((o, revIdx) => {
+      let idx = orders.length - revIdx; // 倒序顯示：編號從大到小
+      let itemsSummary = [];
+      if (o.flTotal > 0) {
+        let sp = [];
+        if (o.flColor) sp.push(o.flColor);
+        if (o.flTissue) sp.push(o.flTissue);
+        if (o.flWrap) sp.push(o.flWrap);
+        itemsSummary.push('鮮花(' + (o.flStyle || '') + (sp.length ? '·' + sp.join('/') : '') + ') $' + fmt(o.flTotal));
+      }
+      if (o.burger > 0) itemsSummary.push('漢堡盒 $' + fmt(o.burger));
+      if (o.cake4 > 0) itemsSummary.push('4吋現貨 $' + fmt(o.cake4));
+      if (o.bag > 0) itemsSummary.push('提袋 $' + fmt(o.bag));
+      if (o.cooler > 0) itemsSummary.push('保冰 $' + fmt(o.cooler));
+      if (o.utensils > 0) itemsSummary.push('餐具 $' + fmt(o.utensils));
+      if (o.extra > 0) itemsSummary.push('其他加購 $' + fmt(o.extra));
+
+      html += '<div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:9px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.03)">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:12px">';
+      html += '<div><span style="background:#0f172a;color:#fff;font-weight:800;padding:1px 6px;border-radius:4px;margin-right:5px">#' + idx + '</span><b>' + escH(o.timestamp || '') + '</b> <span style="color:#64748b">(' + escH(o.operator || '櫃檯') + ')</span></div>';
+      html += '<div style="font-size:14px;font-weight:800;color:#ff4757">$' + fmt(o.total) + ' <span style="font-size:11px;font-weight:700;color:#475569;background:#e2e8f0;padding:1px 5px;border-radius:3px;margin-left:4px">' + escH(o.payment || '現金') + '</span></div>';
+      html += '</div>';
+
+      if (o.name || o.phone) {
+        html += '<div style="font-size:11.5px;color:#334155;margin-bottom:3px">顧客: <b>' + escH(o.name || '現場顧客') + '</b> ｜ 電話: ' + escH(o.phone || '無') + '</div>';
+      }
+
+      html += '<div style="font-size:11.5px;color:#64748b;line-height:1.4">' + escH(itemsSummary.join(' ｜ ')) + '</div>';
+      if (o.remark) {
+        html += '<div style="font-size:11px;color:#d97706;margin-top:3px;background:#fef3c7;padding:2px 6px;border-radius:4px;display:inline-block">備註: ' + escH(o.remark) + '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  if (cnt) cnt.innerHTML = html;
+  if (modal) modal.classList.add('active');
+}
+
+function closeMgrListModal() {
+  let modal = e('modal-mgr-list');
+  if (modal) modal.classList.remove('active');
+}
+
+function exportTodayOrdersText() {
+  let orders = loadTodayOrders();
+  if (orders.length === 0) { alert('今日尚無任何訂單可複製！'); return; }
+  let d = new Date();
+  let dateStr = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+  let totalRevenue = orders.reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
+
+  let lines = [];
+  lines.push('【WUYI 梧藝 • 今日訂單彙總】');
+  lines.push('日期：' + dateStr);
+  lines.push('總筆數：' + orders.length + ' 筆');
+  lines.push('營業額：$' + fmt(totalRevenue));
+  lines.push('----------------------------');
+  orders.forEach((o, i) => {
+    lines.push('#' + (i + 1) + ' [' + (o.timestamp ? o.timestamp.split(' ')[1] : '') + '] ' + (o.name || '現場') + ' ｜ ' + (o.payment || '現金') + ' ｜ $' + fmt(o.total) + ' (' + (o.operator || '櫃檯') + ')');
+  });
+  lines.push('----------------------------');
+
+  let text = lines.join('\n');
+  copyText(text);
+  showMsg('✅ 已複製今日訂單彙總到剪貼簿！', '#2ed573');
+}
+
+// ──────────────────────────────────────────────
+// 上一單明細彈窗邏輯
+// ──────────────────────────────────────────────
+function getLastOrder() {
+  let orders = loadOrders();
+  return orders.length > 0 ? orders[orders.length - 1] : null;
+}
+
+function showLastOrderModal() {
+  let modal = e('modal-last-order');
+  let cnt = e('last-order-content');
+  let last = getLastOrder();
+
+  if (!last) {
+    if (cnt) {
+      cnt.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;font-size:13.5px">⚠️ 本機目前尚無任何上一單結帳紀錄</div>';
+    }
+    if (modal) modal.classList.add('active');
+    return;
+  }
+
+  let html = '';
+  if (last.slipHtml) {
+    html = '<div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:14px;max-width:380px;margin:0 auto;box-shadow:0 2px 8px rgba(0,0,0,0.04)">' + last.slipHtml + '</div>';
+  } else if (last.orderText) {
+    html = '<pre style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px;font-size:12px;line-height:1.5;white-space:pre-wrap;font-family:monospace;color:#1e293b">' + escH(last.orderText) + '</pre>';
+  } else {
+    html = '<div style="padding:12px;font-size:13px;line-height:1.6">';
+    html += '<div><b>時間：</b>' + escH(last.timestamp || '') + '</div>';
+    html += '<div><b>記錄者：</b>' + escH(last.operator || '櫃檯') + '</div>';
+    html += '<div><b>顧客：</b>' + escH(last.name || '現場顧客') + ' (電話: ' + escH(last.phone || '無') + ')</div>';
+    html += '<div><b>付款方式：</b>' + escH(last.payment || '現金') + '</div>';
+    html += '<div style="margin-top:6px;font-size:15px;font-weight:800;color:#ff4757">總額：$' + fmt(last.total) + '</div>';
+    html += '</div>';
+  }
+
+  if (cnt) cnt.innerHTML = html;
+  if (modal) modal.classList.add('active');
+}
+
+function closeLastOrderModal() {
+  let modal = e('modal-last-order');
+  if (modal) modal.classList.remove('active');
+}
+
+function copyLastOrderFromModal() {
+  let last = getLastOrder();
+  if (!last) { alert('尚無上一單紀錄'); return; }
+  let txt = last.orderText || lastOrderMsg;
+  if (txt) {
+    copyText(txt);
+    showMsg('✅ 已複製上一單明細到剪貼簿！', '#2ed573');
+  } else {
+    alert('此訂單無純文字明細內容');
+  }
+}
+
+function printLastOrderFromModal() {
+  let last = getLastOrder();
+  if (!last) { alert('尚無上一單紀錄'); return; }
+  let html = last.slipHtml || lastSlipHtml;
+  if (html) {
+    e('print-slip').innerHTML = html;
+    window.focus();
+    setTimeout(() => { window.print(); }, 100);
+  } else {
+    alert('此訂單無收據排版內容');
+  }
+}
+
 function printSlip() {
   let tot = parseFloat(e('disp-total').textContent.replace(/[$,]/g, '')) || 0;
   if (tot === 0) {
     if (lastSlipHtml) {
       e('print-slip').innerHTML = lastSlipHtml;
+      e('status-msg').innerHTML = '<span style="color:#7a1c3a;font-weight:bold">🖨️ 已為您補印剛才上一筆結帳收據！</span>';
+      window.focus();
+      setTimeout(() => { window.print(); }, 100);
+      return;
+    }
+    let last = getLastOrder();
+    if (last && last.slipHtml) {
+      e('print-slip').innerHTML = last.slipHtml;
       e('status-msg').innerHTML = '<span style="color:#7a1c3a;font-weight:bold">🖨️ 已為您補印剛才上一筆結帳收據！</span>';
       window.focus();
       setTimeout(() => { window.print(); }, 100);
@@ -1673,6 +1964,7 @@ function printSlip() {
   window.focus();
   setTimeout(() => { window.print(); }, 100);
 }
+
 
 // ──────────────────────────────────────────────
 // 結帳送出與寫入 Google 試算表 (完全過濾 EMOJI)
@@ -1773,7 +2065,9 @@ async function submitOrder() {
     flTissue: flTotal > 0 ? fl.tissue : '',
     flWrap: flTotal > 0 ? fl.wrap : '',
     hardFee: flTotal > 0 ? fl.hard : 0,
-    flTotal, bag, burger, cake4, utensils, cooler, extra, total: tot, remark
+    flTotal, bag, burger, cake4, utensils, cooler, extra, total: tot, remark,
+    slipHtml: lastSlipHtml,
+    orderText: clipTxt
   });
 
   resetAll(true);
